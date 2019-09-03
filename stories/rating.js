@@ -59,7 +59,7 @@ ratingStory.addChapter(
     })
   },
   [
-    notes('Horizontal rating showing stars horizontally')
+    notes('Horizontal rating showing stars horizontally rating in fraction')
   ]
 )
 
@@ -79,7 +79,7 @@ ratingStory.addChapter(
     })
   },
   [
-    notes('Vertical rating showing stars vertically')
+    notes('Vertical rating showing stars vertically rating in fraction')
   ]
 )
 
@@ -259,8 +259,118 @@ ratingStory.addChapter(
     })
   },
   [
-    notes('It should show the strokes but with a warning')
+    notes('It should be colored as per defaults')
   ]
 )
 
+ratingStory.addChapter(
+  'auto styling on missing nonrated field',
+  story => {
+    createStar(story, "1200px", "600px", 4.5, 5, {
+      "direction": "row",
+      "rated": {
+        "fill": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should be colored as per defaults')
+  ]
+)
+
+ratingStory.addChapter(
+  'Error on garbage or no value of dom element',
+  story => {
+    createStar("story", "1200px", "600px", 4.5, 5, {
+      "direction": "row",
+      "rated": {
+        "fill": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show error on garbage or no value of dom element')
+  ]
+)
+
+ratingStory.addChapter(
+  'Error on garbage or missing rating value',
+  story => {
+    createStar(story, "1200px", "600px", undefined, 5, {
+      "direction": "row",
+      "rated": {
+        "fill": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show error on missing or garbage value of rating')
+  ]
+)
+
+
+ratingStory.addChapter(
+  'Error on rating gt no of stars',
+  story => {
+    createStar(story, "1200px", "600px", 7.8, 5, {
+      "direction": "row",
+      "rated": {
+        "fill": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show error on value of rating greater than no of stars')
+  ]
+)
+
+ratingStory.addChapter(
+  'Error on garbage or missing no of stars',
+  story => {
+    createStar(story, "1200px", "600px", 4.5, undefined, {
+      "direction": "row",
+      "rated": {
+        "fill": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show error on missing or garbage value of no of stars')
+  ]
+)
+
+ratingStory.addChapter(
+  'variable no of stars',
+  story => {
+    createStar(story, "1200px", "100px", 4.5, 10, {
+      "direction": "row",
+      "stroke-width": "5px",
+      "rated":{
+        "fill": "#000",
+        "stroke": "#f00"
+      },
+      "nonrated": {
+        "stroke": "#aaa"
+      }
+    })
+  },
+  [
+    notes('It should show required no of stars')
+  ]
+)
+//Not implemented completely
+ratingStory.addChapter(
+  'large no of stars ',
+  story => {
+    createStar(story, "1200", "600", 4.5, 10, {
+      "direction": "column",
+      "rated":{
+        "fill": "#000"
+      }
+    })
+  },
+  [
+    notes('It should show an error')
+  ]
+)
 export default ratingStory
