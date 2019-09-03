@@ -44,6 +44,46 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
+  'Horizontal fractional rating',
+  story => {
+    createStar(story, "1200px", "600px", 4.69, 5, {
+      "direction": "row",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
+    })
+  },
+  [
+    notes('Horizontal rating showing stars horizontally')
+  ]
+)
+
+ratingStory.addChapter(
+  'Vertical fractional rating',
+  story => {
+    createStar(story, "1200px", "600px", 4.69, 5, {
+      "direction": "column",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
+    })
+  },
+  [
+    notes('Vertical rating showing stars vertically')
+  ]
+)
+
+ratingStory.addChapter(
   'width and height in percentage',
   story => {
     createStar(story, "1200%", "600px", 4, 5, {
@@ -163,6 +203,59 @@ ratingStory.addChapter(
           "fill": "#ddd",
           "stroke": "#f00"
       }
+    })
+  },
+  [
+    notes('It should show the strokes but with a warning')
+  ]
+)
+
+ratingStory.addChapter(
+  'User may put garbages anywhere',
+  story => {
+    createStar(story, "random", "600px", 4.5, 5, {
+      "direction": "row",
+      "stroke-width": "10px",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
+    })
+  },
+  [
+    notes('Error messages on breacking rules')
+  ]
+)
+
+ratingStory.addChapter(
+  'direction missing',
+  story => {
+    createStar(story, "1200px", "600px", 4.5, 5, {
+      "stroke-width": "10px",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show an error message telling direction must be row or column')
+  ]
+)
+
+ratingStory.addChapter(
+  'auto styling on missing styling attributes',
+  story => {
+    createStar(story, "1200px", "600px", 4.5, 5, {
+      "direction": "row"
     })
   },
   [
