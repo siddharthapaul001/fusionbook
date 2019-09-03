@@ -6,9 +6,16 @@ const ratingStory = new Story('Rating').addMetas([configs()])
 ratingStory.addChapter(
   'Horizontal rating',
   story => {
-    createStar(story, "400px", "100px", 'row', {
-        "fill": "#ff0",
-        "stroke": "#000"
+    createStar(story, "1200px", "600px", 4, 5, {
+      "direction": "row",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
     })
   },
   [
@@ -19,9 +26,16 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'Vertical rating',
   story => {
-    createStar(story, "400px", "100px", 'column', {
-        "fill": "#ff0",
-        "stroke": "#000"
+    createStar(story, "1200px", "600px", 4, 5, {
+      "direction": "column",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
     })
   },
   [
@@ -32,9 +46,16 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'width and height in percentage',
   story => {
-    createStar(story, "400%", "100%", 'row', {
-        "fill": "#ff0",
-        "stroke": "#000"
+    createStar(story, "1200%", "600px", 4, 5, {
+      "direction": "row",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
     })
   },
   [
@@ -45,10 +66,17 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'Justify Content streach testing',
   story => {
-    createStar(story, "1000px", "100px", 'row', {
-        "fill": "#ff0",
-        "stroke": "#000",
-        "justify-content": "streach"
+    createStar(story, "1200px", "100px", 4, 5, {
+      "direction": "row",
+      "justify-content": "streach",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
     })
   },
   [
@@ -60,10 +88,17 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'Justify Content center testing',
   story => {
-    createStar(story, "1000px", "100px", 'row', {
-        "fill": "#ff0",
-        "stroke": "#000",
-        "justify-content": "center"
+    createStar(story, "1200px", "100px", 4, 5, {
+      "direction": "row",
+      "justify-content": "center",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
     })
   },
   [
@@ -72,16 +107,66 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'stroke-width testing',
+  'large stroke-width testing',
   story => {
-    createStar(story, "1000px", "400px", 'row', {
-        "fill": "#ff0",
-        "stroke": "#000",
-        "stroke-width": "80px"
+    createStar(story, "1200px", "600px", 4, 5, {
+      "direction": "row",
+      "stroke-width": "400px",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
     })
   },
   [
-    notes('Horizontal rating showing stars horizontally where width is in %')
+    notes('It should write error on console for large stroke width value')
+  ]
+)
+
+
+ratingStory.addChapter(
+  'simple stroke-width',
+  story => {
+    createStar(story, "1200px", "600px", 4, 5, {
+      "direction": "row",
+      "stroke-width": "10px",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show the rating stars with strokes of 10px')
+  ]
+)
+
+ratingStory.addChapter(
+  'stroke-width with fractional rating',
+  story => {
+    createStar(story, "1200px", "600px", 4.5, 5, {
+      "direction": "row",
+      "stroke-width": "10px",
+      "rated": {
+          "fill": "#ff0",
+          "stroke": "#000"
+      },
+      "nonrated": {
+          "fill": "#ddd",
+          "stroke": "#f00"
+      }
+    })
+  },
+  [
+    notes('It should show the strokes but with a warning')
   ]
 )
 
