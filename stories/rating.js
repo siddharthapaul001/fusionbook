@@ -1,376 +1,318 @@
 import { Story, notes, configs } from '../src/lib/story'
-import createStar from '../components/html/rating'
+import StarRating from '../components/html/rating'
 
 const ratingStory = new Story('Rating').addMetas([configs()])
 
 ratingStory.addChapter(
-  'Horizontal rating',
+  'StarRating with all default values',
   story => {
-    createStar(story, "1200px", "600px", 4, 5, {
-      "direction": "row",
+    let rating = new StarRating(story);
+  },
+  [
+    notes('StarRating should show the stars as per default values i.e horizontally with fillcolor yellow and without strokes. The bounding box of stars should be always square.')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating without REQUIRED HTML Element',
+  story => {
+    let rating = new StarRating("story");
+  },
+  [
+    notes('Error message should be shown saying missing or having garbage values for HTML Element where to append the stars')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating with specified height and width values as number and update height only',
+  story => {
+    let rating = new StarRating(story,{
+      "height": 400,
+      "width": 400
+    });
+    setTimeout(function(){
+      rating.update({
+        "height": 600
+      });
+    }, 3000);
+  },
+  [
+    notes('Initially should show 5 stars with svg of specified height and width and then update height only')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating with specified height and width values less than 10',
+  story => {
+    let rating = new StarRating(story,{
+      "height": 5,
+      "width": 5
+    });
+  },
+  [
+    notes('Should show an error message and set height and width to default')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating with specified height and width values in % and update both',
+  story => {
+    let rating = new StarRating(story, {
+        "height": "400%", 
+        "width": "400%"
+      });
+    setTimeout(function(){
+      rating.update({
+        "width": 800, 
+        "height": 600
+      });
+    }, 3000);
+  },
+  [
+    notes('Initially should show 5 stars with svg of specified height and width and then update height and width')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating with specified height and width values in px then update width with garbage',
+  story => {
+    let rating = new StarRating(story, {
+      "width": "400px", 
+      "height":"400px"
+    });
+    setTimeout(function(){
+      rating.update({
+        "width": "garbage",
+        "height": undefined
+      });
+    }, 3000);
+  },
+  [
+    notes('Initially should show 5 stars with svg of specified height and width and then should show a error')
+  ]
+)
+
+ratingStory.addChapter(
+  'Rating using default number of stars and updating rating',
+  story => {
+    let rating = new StarRating(story, {
+      "width": "1200", 
+      "height": 600, 
+      "rating": 2.69
+    });
+    setTimeout(function(){
+      rating.update({
+        "rating":4.5, 
+        "stars": 10
+      });
+    }, 3000);
+  },
+  [
+    notes('Initially should show 5 stars visualize 2.69/5 first and after 3s 4.5/10')
+  ]
+)
+
+ratingStory.addChapter(
+  'rating in default 5 stars in default height width and update',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 2.69
+    });
+    setTimeout(function(){
+      rating.update({
+        "rating":4.5
+      });
+    }, 3000);
+  },
+  [
+    notes('Initially should show 5 stars visualize 2.69/5 first and after 3s 4.5/5')
+  ]
+)
+
+ratingStory.addChapter(
+  'Variable number of stars and negative or garbage value in rating on update',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "rating": 7.6, 
+      "stars": 8
+    });
+    setTimeout(function(){
+      rating.update({
+        "stars": 20
+      });
+      setTimeout(function(){
+        rating.update({
+          "rating": -1, 
+          "stars": 20
+        });
+      }, 3000);
+    }, 3000);
+  },
+  [
+    notes('Initially should show 8 stars visualizing 7.6/8, after 3s no of stars should be 20 and after 6s should say error')
+  ]
+)
+
+ratingStory.addChapter(
+  'rating is greater than number of stars',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "rating": 12, 
+      "stars": 10
+    });
+  },
+  [
+    notes('Should show error notifying rating is greater than no of stars and stop execution')
+  ]
+)
+
+ratingStory.addChapter(
+  'number of stars in negative',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "rating": 0, 
+      "stars": -10
+    });
+  },
+  [
+    notes('Should show error notifying no of stars is negative and stop execution')
+  ]
+)
+
+//IMPORTANT
+ratingStory.addChapter(
+  'On update prevention check other attributes changes',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "width": 1400,
+        "height": 600,
+        "rating": 10.2,
+        "stars": 5
+      })
+    }, 3000);
+  },
+  [
+    notes('First it should visualize 5/5 rating then raise error after 3s but do not update width and height')
+  ]
+)
+
+ratingStory.addChapter(
+  'Checking zero rating',
+  story => {
+    let rating = new StarRating(story, { 
+      "rating": 0 
+    });
+  },
+  [
+    notes('Should visualize 0/5')
+  ]
+)
+
+ratingStory.addChapter(
+  'number of stars is garbage',
+  story => {
+    let rating = new StarRating(story,{
+      "stars":"garbage"
+    });
+  },
+  [
+    notes('Should show error notifying no of stars must be numeric value but execute with default rating 5/5 inside default svg size')
+  ]
+)
+
+ratingStory.addChapter(
+  'Only number of stars is given',
+  story => {
+    let rating = new StarRating(story,{
+      "stars": 10
+    });
+  },
+  [
+    notes('Should visualize 10/10 rating')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating orientation initially left-to-right then updating',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "rating": 4.5, 
+      "stars": 5,
+      "orientation": "left-to-right"
+    });
+    setTimeout(function(){
+      rating.update({
+        "orientation": "right-to-left"
+      });
+        
+      setTimeout(function(){
+        rating.update({
+          "orientation": "garbage"
+        });
+      }, 3000);
+
+    }, 3000);
+  },
+  [
+    notes('Initially should visualize 4.5/5 horizontally and orientation should be left-to-right after 3s orientation should be right-to-left and after 6s it should show error but remain in prevous state')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating orientation bottom-to-top',
+  story => {
+    let rating = new StarRating(story,{
+      "rating": 4.5,
+      "orientation": "bottom-to-top"
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 vertically and fill flow should be bottom to up')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating orientation top-to-bottom',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "orientation": "top-to-bottom"
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 vertically and fill flow should be top to bottom')
+  ]
+)
+
+ratingStory.addChapter(
+  'StarRating orientation initially left-to-right then updating',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
       "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
+
       },
       "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
+
       }
-    })
+    });
   },
   [
-    notes('Horizontal rating showing stars horizontally')
-  ]
-)
-
-ratingStory.addChapter(
-  'Vertical rating',
-  story => {
-    createStar(story, "1200px", "600px", 4, 5, {
-      "direction": "column",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Vertical rating showing stars vertically')
-  ]
-)
-
-ratingStory.addChapter(
-  'Horizontal fractional rating',
-  story => {
-    createStar(story, "1200px", "600px", 4.69, 5, {
-      "direction": "row",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Horizontal rating showing stars horizontally rating in fraction')
-  ]
-)
-
-ratingStory.addChapter(
-  'Vertical fractional rating',
-  story => {
-    createStar(story, "1200px", "600px", 4.69, 5, {
-      "direction": "column",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Vertical rating showing stars vertically rating in fraction')
-  ]
-)
-
-ratingStory.addChapter(
-  'width and height in percentage',
-  story => {
-    createStar(story, "1200%", "600px", 4, 5, {
-      "direction": "row",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Horizontal rating showing stars horizontally where width is in %')
-  ]
-)
-
-ratingStory.addChapter(
-  'Justify Content streach testing',
-  story => {
-    createStar(story, "1200px", "100px", 4, 5, {
-      "direction": "row",
-      "justify-content": "streach",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Horizontal rating showing stars automatic adjust space between stars')
-  ]
-)
-
-
-ratingStory.addChapter(
-  'Justify Content center testing',
-  story => {
-    createStar(story, "1200px", "100px", 4, 5, {
-      "direction": "row",
-      "justify-content": "center",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Horizontal rating showing stars center with required space only')
-  ]
-)
-
-ratingStory.addChapter(
-  'large stroke-width testing',
-  story => {
-    createStar(story, "1200px", "600px", 4, 5, {
-      "direction": "row",
-      "stroke-width": "400px",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should write error on console for large stroke width value')
-  ]
-)
-
-
-ratingStory.addChapter(
-  'simple stroke-width',
-  story => {
-    createStar(story, "1200px", "600px", 4, 5, {
-      "direction": "row",
-      "stroke-width": "10px",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show the rating stars with strokes of 10px')
-  ]
-)
-
-ratingStory.addChapter(
-  'stroke-width with fractional rating',
-  story => {
-    createStar(story, "1200px", "600px", 4.5, 5, {
-      "direction": "row",
-      "stroke-width": "10px",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show the strokes but with a warning')
-  ]
-)
-
-ratingStory.addChapter(
-  'User may put garbages anywhere',
-  story => {
-    createStar(story, "random", "600px", 4.5, 5, {
-      "direction": "row",
-      "stroke-width": "10px",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('Error messages on breacking rules')
-  ]
-)
-
-ratingStory.addChapter(
-  'direction missing',
-  story => {
-    createStar(story, "1200px", "600px", 4.5, 5, {
-      "stroke-width": "10px",
-      "rated": {
-          "fill": "#ff0",
-          "stroke": "#000"
-      },
-      "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show an error message telling direction must be row or column')
-  ]
-)
-
-ratingStory.addChapter(
-  'auto styling on missing styling attributes',
-  story => {
-    createStar(story, "1200px", "600px", 4.5, 5, {
-      "direction": "row"
-    })
-  },
-  [
-    notes('It should be colored as per defaults')
-  ]
-)
-
-ratingStory.addChapter(
-  'auto styling on missing nonrated field',
-  story => {
-    createStar(story, "1200px", "600px", 4.5, 5, {
-      "direction": "row",
-      "rated": {
-        "fill": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should be colored as per defaults')
-  ]
-)
-
-ratingStory.addChapter(
-  'Error on garbage or no value of dom element',
-  story => {
-    createStar("story", "1200px", "600px", 4.5, 5, {
-      "direction": "row",
-      "rated": {
-        "fill": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show error on garbage or no value of dom element')
-  ]
-)
-
-ratingStory.addChapter(
-  'Error on garbage or missing rating value',
-  story => {
-    createStar(story, "1200px", "600px", undefined, 5, {
-      "direction": "row",
-      "rated": {
-        "fill": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show error on missing or garbage value of rating')
-  ]
-)
-
-
-ratingStory.addChapter(
-  'Error on rating gt no of stars',
-  story => {
-    createStar(story, "1200px", "600px", 7.8, 5, {
-      "direction": "row",
-      "rated": {
-        "fill": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show error on value of rating greater than no of stars')
-  ]
-)
-
-ratingStory.addChapter(
-  'Error on garbage or missing no of stars',
-  story => {
-    createStar(story, "1200px", "600px", 4.5, undefined, {
-      "direction": "row",
-      "rated": {
-        "fill": "#f00"
-      }
-    })
-  },
-  [
-    notes('It should show error on missing or garbage value of no of stars')
-  ]
-)
-
-ratingStory.addChapter(
-  'variable no of stars',
-  story => {
-    createStar(story, "1200px", "100px", 4.5, 10, {
-      "direction": "row",
-      "stroke-width": "5px",
-      "rated":{
-        "fill": "#000",
-        "stroke": "#f00"
-      },
-      "nonrated": {
-        "stroke": "#aaa"
-      }
-    })
-  },
-  [
-    notes('It should show required no of stars')
-  ]
-)
-//Not implemented completely
-ratingStory.addChapter(
-  'large no of stars ',
-  story => {
-    createStar(story, "1200", "600", 4.5, 10, {
-      "direction": "column",
-      "rated":{
-        "fill": "#000"
-      }
-    })
-  },
-  [
-    notes('It should show an error')
+    notes('Should visualize 4.5/5 with default')
   ]
 )
 export default ratingStory
