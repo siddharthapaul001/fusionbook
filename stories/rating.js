@@ -42,7 +42,7 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'StarRating with specified height and width values less than 10',
+  'StarRating with specified height and width values less than 20',
   story => {
     let rating = new StarRating(story,{
       "height": 5,
@@ -51,6 +51,20 @@ ratingStory.addChapter(
   },
   [
     notes('Should show an error message and set height and width to default')
+  ]
+)
+
+ratingStory.addChapter(
+  'Minimum value of width and height',
+  story => {
+    let rating = new StarRating(story,{
+      "height": 20,
+      "width": 20,
+      "stars": 1
+    });
+  },
+  [
+    notes('Should show 1/1 star')
   ]
 )
 
@@ -208,6 +222,127 @@ ratingStory.addChapter(
   ]
 )
 
+//CONFUSING TO USER
+ratingStory.addChapter(
+  'Check stroke-with attribute without style attributes',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600,
+      "stroke-width": '5',
+    });
+  },
+  [
+    notes('It should visualize 5/5 rating stroke-width: 5px with default styles i.e stroke color none(not visible) so give a warning')
+  ]
+)
+
+ratingStory.addChapter(
+  'Check stroke-with attribute with style attributes',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600,
+      "stroke-width": '5',
+      "rated":{
+        "stroke": "#000"
+      },
+      "nonrated":{
+        "stroke": "#ff0"
+      }
+    });
+  },
+  [
+    notes('It should visualize 5/5 rating stroke-width: 5px with combined-styles as-> rated: yellow-black, nonrated: grey-red')
+  ]
+)
+
+ratingStory.addChapter(
+  'Check large stroke-with',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600,
+      "stroke-width": '100',
+      "rated":{
+        "stroke": "#000"
+      },
+      "nonrated":{
+        "stroke": "#ff0"
+      }
+    });
+  },
+  [
+    notes('It should visualize 5/5 rating without strokes but raise a error as stroke-with is not managable')
+  ]
+)
+
+ratingStory.addChapter(
+  'Check stroke-with attribute with style attributes',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600,
+      "stroke-width": '-5',
+      "rated":{
+        "fill": "#ff0",
+        "stroke": "#000"
+      },
+      "nonrated":{
+        "fill": "#fff",
+        "stroke": "#ff0"
+      }
+    });
+  },
+  [
+    notes('It should visualize 5/5 rating skipping stroke-width: -5 and raise an error notifying nagative stroke width')
+  ]
+)
+
+//IMPORTANT
+ratingStory.addChapter(
+  'On update prevention check other attributes changes',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "rated":{
+        "fill": "#f00",
+        "stroke": "#000"
+      },
+      "nonrated":{
+        "fill": "#ddd",
+        "stroke": "#ff0"
+      }
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "rating": 10.2,
+        "stars": 5,
+        "rated":{
+          "fill": "#000",
+          "stroke": "#f00"
+        },
+        "nonrated":{
+          "fill": "#ddd",
+          "stroke": "#ff0"
+        }
+      });
+
+      setTimeout(function(){
+        rating.update({
+          "rating": 3,
+          "stars": 5
+        })
+      }, 3000);
+    }, 3000);
+  },
+  [
+    notes('First it should visualize 5/5 rating then raise error after 3s but do not update other attributes and rollback to prevous. In next update after 6s it should take fill and stroke from creation i.e. rated: red-black nonrated:grey-yellow')
+  ]
+)
+
 ratingStory.addChapter(
   'Checking zero rating',
   story => {
@@ -299,7 +434,7 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'StarRating orientation initially left-to-right then updating',
+  'StarRating with empty styles inside rated and unrated',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
@@ -315,4 +450,255 @@ ratingStory.addChapter(
     notes('Should visualize 4.5/5 with default')
   ]
 )
+
+ratingStory.addChapter(
+  'StarRating orientation initially left-to-right then updating',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "rated": {
+        "fill": "#f00"
+      }
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 with rated fill color red')
+  ]
+)
+
+ratingStory.addChapter(
+  'Rated fill in RGB',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "rated": {
+        "fill": "rgb(255,0,0)"
+      }
+    });
+  },
+  [
+    notes('Rated fill of rating 4.5/5 should have rated fill color red')
+  ]
+)
+
+ratingStory.addChapter(
+  'Incorrect hex color code',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "rated": {
+        "fill": "#xyz"
+      }
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 with default fill color and raise error notifying improper hex code')
+  ]
+)
+
+ratingStory.addChapter(
+  'Nonrated fill color',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "nonrated": {
+        "fill": "#00f"
+      }
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 with default fill color for rated but nonrated fill is blue')
+  ]
+)
+
+ratingStory.addChapter(
+  'Nonrated fill color',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "nonrated": {
+        "fill": "#00f"
+      }
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 with default fill color for rated but nonrated fill is blue')
+  ]
+)
+
+ratingStory.addChapter(
+  'Nonrated fill color',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "nonrated": {
+        "fill": "#00f"
+      }
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 with default fill color for rated but nonrated fill is blue')
+  ]
+)
+
+ratingStory.addChapter(
+  'Justify content stretch',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "stretch",
+      "height": 100,
+      "width": 1200
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating stars strethed to whole width with defaults')
+  ]
+)
+
+ratingStory.addChapter(
+  'Justify content center',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "center",
+      "height": 100,
+      "width": 1200
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating stars at center of whole width with defaults')
+  ]
+)
+
+ratingStory.addChapter(
+  'Justify content start',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "start",
+      "height": 100,
+      "width": 1200
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating from left')
+  ]
+)
+
+ratingStory.addChapter(
+  'Justify content end',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "end",
+      "height": 100,
+      "width": 1200
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating at right side')
+  ]
+)
+
+ratingStory.addChapter(
+  'Justify content stretch with orientation bottom-to-top',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "stretch",
+      "orientation": "bottom-to-top",
+      "height": 1200,
+      "width": 100
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating taking the whole width and fill flow from bottom')
+  ]
+)
+
+ratingStory.addChapter(
+  'Justify content end with orientation top-to-bottom',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "end",
+      "orientation": "top-to-bottom",
+      "height": 100,
+      "width": 1200
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating vertically but alignment from bottom')
+  ]
+)
+
+ratingStory.addChapter(
+  'padding of 5',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "center",
+      "height": 100,
+      "width": 1200,
+      "padding": 5
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating at center horizontally with padding 5')
+  ]
+)
+
+ratingStory.addChapter(
+  'padding < 2 or negative',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "center",
+      "height": 100,
+      "width": 1200,
+      "padding": 0
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating taking default padding 2 and raise an error')
+  ]
+)
+
+
+ratingStory.addChapter(
+  'large padding',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "center",
+      "height": 100,
+      "width": 1200,
+      "padding": 100
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating taking default padding 2 and raise error notifying non-managable padding')
+  ]
+)
+
+//THE COMPLETE ONE
+ratingStory.addChapter(
+  'Justify content end with orientation top-to-bottom',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "stretch",
+      "orientation": "top-to-bottom",
+      "height": 100,
+      "width": 1200,
+      "padding": 4,
+      "stroke-width": 5,
+      "rated": {
+        "fill": "#f00",
+        "stroke": "#000"
+      },
+      "nonrated": {
+        "fill": "#00f",
+        "stroke": "#f00"
+      },
+      "rating": 8.6,
+      "stars": 10
+    });
+  },
+  [
+    notes('Should visualize 5/5 rating vertically but alignment from bottom')
+  ]
+)
+
 export default ratingStory
