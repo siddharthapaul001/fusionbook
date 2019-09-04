@@ -155,11 +155,11 @@ class StarRating {
         //If N is fraction no issue because it used to limit loops only
 
         //check if rating is given as number otherwise set the default value 5
-        if (!+rating) {
+        if (!+rating && rating != 0) {
             rating = this.rating;
         }
 
-        if (rating && rating > N) {
+        if (rating && (rating > N || rating < 0)) {
             console.error("Rating should be greater than 0 and less than No of stars");
             shouldContinue = false;
         }
@@ -427,7 +427,7 @@ class StarRating {
 
     _draw() {
         let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0, 
-        rating = this.rating || this.N;
+        rating = !this.rating && this.rating != 0 ? this.N : this.rating; //to handle 0 check
         //Adjust no of star
         //Append if extra needed
         for (i = this.stars.length; i < this.N; i++) {
