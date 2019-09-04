@@ -1,3 +1,48 @@
+function _pluckSize(size, str) {
+    str = str ? 'of ' + str : '';
+    let num = (size + '').match(/\d+/g),
+        unit = (size + '').match(/px|%|vh|vw/g) || [''];
+    if (!num) {
+        if (size) {
+            console.error("Error in size value" + str);
+        }
+        return {
+            num: null,
+            unit: ''
+        };
+    }
+    return {
+        num: +num[0],
+        unit: unit[0]
+    };
+}
+
+function _validateColorCode(color) {
+    if (!color) {
+        return false;
+    }
+    if (typeof color === 'number') {
+        console.error("Incorrect color specified");
+        return false;
+    }
+    if (color.startsWith('#')) {
+        if (!color.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/g)) {
+            console.error("Incorrect hex color code");
+            return false;
+        }
+    } else if (color.startsWith('rgb(')) {
+        if (!color.replace(/\s/g, '').match(/^rgb\((\d+),(\d+),(\d+)\)$/g)) {
+            console.error("Incorrect rgb color code");
+            return false;
+        }
+    }
+    return true;
+}
+
+function _isFraction(num) {
+    return !(Math.abs(num - Math.floor(num)) < Number.EPSILON);
+}
+
 class StarRating {
     constructor(parentElement, attribs) {
         //check if parentElement is a HTMLElement otherwise show and error and stop execution
@@ -11,10 +56,11 @@ class StarRating {
         this.height = 400;
         this.width = 400;
         this.N = 5;
-        this.rating = this.N;
+        this.rating = undefined;
         this.orientation = 'left-to-right';
         this.padding = 1;
         this.justifyContent = 'center';
+        this.alignItems = 'center';
         this.strokeWidth = 0;
         this.ratedFill = "#ff0";
         this.nonratedFill = "#ddd";
@@ -49,28 +95,28 @@ class StarRating {
                 return null;
             }
         } else {
-            this.sideOut = Math.min(this.direction == 'row' ? this.width / this.N : this.width, this.direction == 'column' ? this.height / this.N : this.height);
-            this.side = this.sideOut - this.padding * 4 - this.strokeWidth * 4;
-            //this._validateAndSet({});
+            this._validateAndSet({});
             this._draw();
         }
     }
 
     _validateAndSet(attribs) {
-        let height = this._pluckSize(attribs['height'], 'Height'),
-            width = this._pluckSize(attribs['width'], 'Width'),
+        let height = _pluckSize(attribs['height'], 'Height'),
+            width = _pluckSize(attribs['width'], 'Width'),
             N = attribs['stars'],
             rating = attribs['rating'],
             orientation = attribs['orientation'],
-            padding = this._pluckSize(attribs['padding'], 'Padding'),
-            strokeWidth = this._pluckSize(attribs['stroke-width'], 'Stroke Width'),
+            padding = _pluckSize(attribs['padding'], 'Padding'),
+            strokeWidth = _pluckSize(attribs['stroke-width'], 'Stroke Width'),
             justifyContent = attribs['justify-content'],
+            alignItems = attribs['align-items'],
             styles = {
                 "rated": attribs['rated'],
                 "nonrated": attribs['nonrated']
             };
         let validOrientation = ['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'],
-            validJustifyContent = ['center', 'stretch', 'start', 'end'],
+            validJustifyContent = ['center', 'space-evenly', 'start', 'end'],
+            validAlignItems = ['center', 'start', 'end'],
             shouldContinue = true,
             side, sideOut,
             direction,
@@ -110,15 +156,11 @@ class StarRating {
 
         //check if rating is given as number otherwise set the default value 5
         if (!+rating) {
-            if (this.rating == this.N) {
-                rating = N;
-            } else {
-                rating = this.rating;
-            }
+            rating = this.rating;
         }
 
-        if (rating > N) {
-            console.error("Rating must be greater than No of stars");
+        if (rating && rating > N) {
+            console.error("Rating should be greater than 0 and less than No of stars");
             shouldContinue = false;
         }
 
@@ -128,6 +170,14 @@ class StarRating {
                 console.error("Incorrect value for justify-content");
             }
             justifyContent = this.justifyContent;
+        }
+
+        //Align items
+        if (!validAlignItems.includes(alignItems)) {
+            if (alignItems) {
+                console.error("Incorrect value for align-items");
+            }
+            alignItems = this.alignItems;
         }
 
         //orientation
@@ -155,6 +205,10 @@ class StarRating {
         } else {
             console.error("Paddding value allowed only as number or pixels");
         }
+        if(padding < 1){
+            console.error("Incorrect padding.");
+            padding = this.padding;
+        }
 
         //assign stroke-width
         if (strokeWidth.unit == 'px' || strokeWidth.unit == '') {
@@ -178,16 +232,24 @@ class StarRating {
             styles['nonrated'] = {};
         }
 
-        styles['rated']['fill'] = this._validateColorCode(styles['rated']['fill']) ? styles['rated']['fill'] : this.ratedFill;
-        styles['rated']['stroke'] = this._validateColorCode(styles['rated']['stroke']) ? styles['rated']['stroke'] : this.ratedStroke;
+        styles['rated']['fill'] = _validateColorCode(styles['rated']['fill']) ? styles['rated']['fill'] : this.ratedFill;
+        styles['rated']['stroke'] = _validateColorCode(styles['rated']['stroke']) ? styles['rated']['stroke'] : this.ratedStroke;
 
-        styles['nonrated']['fill'] = this._validateColorCode(styles['nonrated']['fill']) ? styles['nonrated']['fill'] : this.nonratedFill;
-        styles['nonrated']['stroke'] = this._validateColorCode(styles['nonrated']['stroke']) ? styles['nonrated']['stroke'] : this.nonratedStroke;
+        styles['nonrated']['fill'] = _validateColorCode(styles['nonrated']['fill']) ? styles['nonrated']['fill'] : this.nonratedFill;
+        styles['nonrated']['stroke'] = _validateColorCode(styles['nonrated']['stroke']) ? styles['nonrated']['stroke'] : this.nonratedStroke;
 
         //Do calculation to check managable conditions
         if (shouldContinue) {
             sideOut = Math.min(direction == 'row' ? width / N : width, direction == 'column' ? height / N : height);
-            side = sideOut - (padding * 4) - (strokeWidth * 4);
+            if(strokeWidth < 0 || strokeWidth > 0.10 * sideOut){
+                console.error("Incorrect stroke-width");
+                strokeWidth = this.strokeWidth;
+            }
+            if(padding < 1 || padding > 0.10 * sideOut){
+                console.error("Incorrect padding");
+                padding = this.padding;
+            }
+            side = sideOut - (padding * 2) - (strokeWidth * 2);
             console.log(sideOut, side, padding, strokeWidth);
             if (sideOut < 16) {
                 console.error("Could not acomodate so many stars. Reduce no of stars");
@@ -240,6 +302,8 @@ class StarRating {
             this.side = side;
             this.sideOut = sideOut;
             this.strokeWidth = strokeWidth;
+            this.justifyContent = justifyContent;
+            this.alignItems = alignItems;
             //extract direction and flow from orientation
             this.direction = direction;
             this.flow = flow;
@@ -248,47 +312,6 @@ class StarRating {
             this.svg.setAttribute("height", this.height);
         }
         return shouldContinue;
-    }
-
-    _pluckSize(size, str) {
-        str = str ? 'of ' + str : '';
-        let num = (size + '').match(/\d+/g),
-            unit = (size + '').match(/px|%|vh|vw/g) || [''];
-        if (!num) {
-            if (size) {
-                console.error("Error in size value" + str);
-            }
-            return {
-                num: null,
-                unit: ''
-            };
-        }
-        return {
-            num: +num[0],
-            unit: unit[0]
-        };
-    }
-
-    _validateColorCode(color) {
-        if (!color) {
-            return false;
-        }
-        if (typeof color === 'number') {
-            console.error("Incorrect color specified");
-            return false;
-        }
-        if (color.startsWith('#')) {
-            if (!color.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/g)) {
-                console.error("Incorrect hex color code");
-                return false;
-            }
-        } else if (color.startsWith('rgb(')) {
-            if (!color.replace(/\s/g, '').match(/^rgb\((\d+),(\d+),(\d+)\)$/g)) {
-                console.error("Incorrect rgb color code");
-                return false;
-            }
-        }
-        return true;
     }
 
     _getPathString(side, X, Y) {
@@ -328,7 +351,8 @@ class StarRating {
             strokeRatedStart = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
             strokeRatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
             strokeNonRatedStart = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            strokeNonRatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+            strokeNonRatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
+            ratingFraction = 0, startFill = this.ratedFill, endFill = this.nonratedFill, startStroke = this.ratedStroke, endStroke = this.nonratedStroke;
 
         linearGradient.setAttribute("id", "partial-fill");
         linearGradient.setAttribute("x1", "0%");
@@ -358,45 +382,33 @@ class StarRating {
             strokeLinearGradient.setAttribute("y2", "0%");
         }
 
+        ratingFraction = this.rating ? (this.rating - Math.floor(this.rating)).toFixed(2) : 0;
         if (this.flow == 'reverse') {
-            RatedStart.setAttribute("offset", "0%");
-            RatedEnd.setAttribute("offset", ((1 - (this.rating - Math.floor(this.rating))).toFixed(2) * 100) + "%");
-            NonRatedStart.setAttribute("offset", ((1 - (this.rating - Math.floor(this.rating))).toFixed(2) * 100) + "%");
-            NonRatedEnd.setAttribute("offset", "100%");
-            RatedStart.setAttribute("style", "stop-color:" + this.nonratedFill + ";stop-opacity:1;");
-            RatedEnd.setAttribute("style", "stop-color:" + this.nonratedFill + ";stop-opacity:1;");
-            NonRatedStart.setAttribute("style", "stop-color:" + this.ratedFill + ";stop-opacity:1;");
-            NonRatedEnd.setAttribute("style", "stop-color:" + this.ratedFill + ";stop-opacity:1;");
-        } else {
-            RatedStart.setAttribute("offset", "0%");
-            RatedEnd.setAttribute("offset", ((this.rating - Math.floor(this.rating)).toFixed(2) * 100) + "%");
-            NonRatedStart.setAttribute("offset", ((this.rating - Math.floor(this.rating)).toFixed(2) * 100) + "%");
-            NonRatedEnd.setAttribute("offset", "100%");
-            RatedStart.setAttribute("style", "stop-color:" + this.ratedFill + ";stop-opacity:1;");
-            RatedEnd.setAttribute("style", "stop-color:" + this.ratedFill + ";stop-opacity:1;");
-            NonRatedStart.setAttribute("style", "stop-color:" + this.nonratedFill + ";stop-opacity:1;");
-            NonRatedEnd.setAttribute("style", "stop-color:" + this.nonratedFill + ";stop-opacity:1;");
+            ratingFraction = 1 - ratingFraction;
+            startFill = this.nonratedFill;
+            endFill = this.ratedFill;
+            startStroke = this.nonratedStroke;
+            endStroke = this.ratedStroke;
         }
 
-        if (this.flow == 'reverse') {
-            strokeRatedStart.setAttribute("offset", "0%");
-            strokeRatedEnd.setAttribute("offset", ((1 - (this.rating - Math.floor(this.rating))).toFixed(2) * 100) + "%");
-            strokeNonRatedStart.setAttribute("offset", ((1 - (this.rating - Math.floor(this.rating))).toFixed(2) * 100) + "%");
-            strokeNonRatedEnd.setAttribute("offset", "100%");
-            strokeRatedStart.setAttribute("style", "stop-color:" + this.nonratedStroke + ";stop-opacity:1;");
-            strokeRatedEnd.setAttribute("style", "stop-color:" + this.nonratedStroke + ";stop-opacity:1;");
-            strokeNonRatedStart.setAttribute("style", "stop-color:" + this.ratedStroke + ";stop-opacity:1;");
-            strokeNonRatedEnd.setAttribute("style", "stop-color:" + this.ratedStroke + ";stop-opacity:1;");
-        } else {
-            strokeRatedStart.setAttribute("offset", "0%");
-            strokeRatedEnd.setAttribute("offset", ((this.rating - Math.floor(this.rating)).toFixed(2) * 100) + "%");
-            strokeNonRatedStart.setAttribute("offset", ((this.rating - Math.floor(this.rating)).toFixed(2) * 100) + "%");
-            strokeNonRatedEnd.setAttribute("offset", "100%");
-            strokeRatedStart.setAttribute("style", "stop-color:" + this.ratedStroke + ";stop-opacity:1;");
-            strokeRatedEnd.setAttribute("style", "stop-color:" + this.ratedStroke + ";stop-opacity:1;");
-            strokeNonRatedStart.setAttribute("style", "stop-color:" + this.nonratedStroke + ";stop-opacity:1;");
-            strokeNonRatedEnd.setAttribute("style", "stop-color:" + this.nonratedStroke + ";stop-opacity:1;");
-        }
+        RatedStart.setAttribute("offset", "0%");
+        RatedEnd.setAttribute("offset", (ratingFraction * 100) + "%");
+        NonRatedStart.setAttribute("offset", (ratingFraction * 100) + "%");
+        NonRatedEnd.setAttribute("offset", "100%");
+        RatedStart.setAttribute("style", "stop-color:" + startFill + ";stop-opacity:1;");
+        RatedEnd.setAttribute("style", "stop-color:" + startFill + ";stop-opacity:1;");
+        NonRatedStart.setAttribute("style", "stop-color:" + endFill + ";stop-opacity:1;");
+        NonRatedEnd.setAttribute("style", "stop-color:" + endFill + ";stop-opacity:1;");
+
+        strokeRatedStart.setAttribute("offset", "0%");
+        strokeRatedEnd.setAttribute("offset", (ratingFraction * 100) + "%");
+        strokeNonRatedStart.setAttribute("offset", (ratingFraction * 100) + "%");
+        strokeNonRatedEnd.setAttribute("offset", "100%");
+        strokeRatedStart.setAttribute("style", "stop-color:" + startStroke + ";stop-opacity:1;");
+        strokeRatedEnd.setAttribute("style", "stop-color:" + startStroke + ";stop-opacity:1;");
+        strokeNonRatedStart.setAttribute("style", "stop-color:" + endStroke + ";stop-opacity:1;");
+        strokeNonRatedEnd.setAttribute("style", "stop-color:" + endStroke + ";stop-opacity:1;");
+
 
         linearGradient.appendChild(RatedStart);
         linearGradient.appendChild(RatedEnd);
@@ -413,12 +425,9 @@ class StarRating {
         this.svg.appendChild(defs);
     }
 
-    _isFraction(num) {
-        return !(Math.abs(num - Math.floor(num)) < Number.EPSILON);
-    }
-
     _draw() {
-        let i, baseY = this.sideOut / 2, baseX = (this.sideOut / 2), xShift = 0, yShift = 0;
+        let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0, 
+        rating = this.rating || this.N;
         //Adjust no of star
         //Append if extra needed
         for (i = this.stars.length; i < this.N; i++) {
@@ -430,29 +439,58 @@ class StarRating {
 
         //remove def if exist
         let defs = this.svg.getElementsByTagName("defs");
-        if(defs.length > 0){
+        if (defs.length > 0) {
             this.svg.removeChild(defs[0]);
         }
-        if(this._isFraction(this.rating)){
+        if (_isFraction(rating)) {
             this._createGradientDefinitions();
         }
 
-        if(this.direction == 'row'){
-            xShift = this.side;
-            /*if(this.justifyContent == 'center'){
-                baseX = (this.width - (this.side * this.N));
-            }*/
-            baseY = ((this.height - this.sideOut) / 2);
-        }else if(this.direction == 'column'){
-            yShift = this.side;
-            /*if(this.justifyContent == 'center'){
-                baseY = (this.height - (this.sideOut * this.N)) / 2;
-            }*/
-            baseX = ((this.width - this.sideOut) / 2);
+        if (this.direction == 'row') {
+            xShift = this.sideOut;
+            if (this.justifyContent == 'start') {
+                baseX = (this.sideOut / 2);
+            } else if (this.justifyContent == 'center') {
+                baseX = (this.sideOut / 2) + ((this.width - (this.sideOut * this.N)) / 2);
+            } else if (this.justifyContent == 'end') {
+                baseX = (this.width - (this.sideOut * this.N)) - (this.sideOut / 2);
+            } else if (this.justifyContent == 'space-evenly') {
+                xShift = this.width / this.N;
+                baseX = xShift / 2;
+                console.log('space-evenly');
+            }
+            if(this.alignItems == 'center'){
+                baseY = ((this.sideOut - this.side) / 2) + ((this.height - this.sideOut) / 2);
+            }else if(this.alignItems == 'start'){
+                baseY = ((this.sideOut - this.side) / 2);
+            }else if(this.alignItems == 'end'){
+                baseY = (this.height - this.sideOut); 
+            }
+        } else if (this.direction == 'column') {
+            yShift = this.sideOut;
+            if (this.justifyContent == 'start') {
+                baseY = (this.sideOut - this.side) / 2;
+            } else if (this.justifyContent == 'center') {
+                baseY = ((this.sideOut - this.side) / 2);
+            } else if (this.justifyContent == 'end') {
+                baseY = (this.height - (this.sideOut * this.N));
+            } else if (this.justifyContent == 'space-evenly') {
+                yShift = this.height / this.N;
+                baseY = (yShift - this.side) / 2;
+            }
+
+            console.log(this.alignItems);
+            if(this.alignItems == 'center'){
+                baseX = (this.sideOut / 2) + ((this.width - this.sideOut) / 2);
+            }else if(this.alignItems == 'start'){
+                baseX = this.sideOut / 2;
+            }else if(this.alignItems == 'end'){
+                baseX = this.width - (this.sideOut / 2);
+            }
         }
 
-        for(i = 0; i < this.stars.length; i++){
-            this.stars[i].setAttribute('d', 
+        for (i = 0; i < this.stars.length; i++) {
+            this.stars[i].setAttribute('d',
                 this._getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
             );
         }
@@ -460,12 +498,13 @@ class StarRating {
 
         //setting colors
         for (i = 0; i < this.stars.length; i++) {
-            if (this._isFraction(this.rating) && Math.ceil(this.rating) == i + 1) {
+            j = this.flow == 'reverse' ? this.stars.length - i - 1 : i;
+            if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
                 this.stars[i].setAttribute("fill", "url(#partial-fill)");
                 this.stars[i].setAttribute("stroke", "url(#partial-stroke)");
             } else {
-                this.stars[i].setAttribute("fill", i < Math.ceil(this.rating) ? this.ratedFill : this.nonratedFill);
-                this.stars[i].setAttribute("stroke", i < Math.ceil(this.rating) ? this.ratedStroke : this.nonratedStroke);
+                this.stars[i].setAttribute("fill", j < Math.ceil(rating) ? this.ratedFill : this.nonratedFill);
+                this.stars[i].setAttribute("stroke", j < Math.ceil(rating) ? this.ratedStroke : this.nonratedStroke);
             }
             this.stars[i].setAttribute("stroke-width", this.strokeWidth + "px");
         }

@@ -158,7 +158,7 @@ ratingStory.addChapter(
       });
       setTimeout(function(){
         rating.update({
-          "rating": -1, 
+          "rating": -1,
           "stars": 20
         });
       }, 3000);
@@ -457,13 +457,6 @@ ratingStory.addChapter(
       rating.update({
         "orientation": "right-to-left"
       });
-        
-      setTimeout(function(){
-        rating.update({
-          "orientation": "garbage"
-        });
-      }, 3000);
-
     }, 3000);
   },
   [
@@ -498,6 +491,49 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
+  'StarRating orientation top-to-bottom align-items start',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "orientation": "top-to-bottom",
+      "align-items": "start"
+    });
+  },
+  [
+    notes('Should visualize 4.5/5 vertically and fill flow should be top to bottom rating should be left align')
+  ]
+)
+
+
+ratingStory.addChapter(
+  'StarRating orientation top-to-bottom align-items end',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "orientation": "top-to-bottom",
+      "align-items": "end"
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "orientation": "right-to-left",
+        "align-items": "end"
+      });
+
+      setTimeout(function(){
+        rating.update({
+          "orientation": "right-to-left",
+          "align-items": "start"
+        })
+      }, 3000);
+    }, 3000);
+  },
+  [
+    notes('Should visualize 4.5/5 vertically and fill flow should be top to bottom rating should be right align after 3s it should be horizontal and bottom align after 6s horizontal top align')
+  ]
+)
+
+ratingStory.addChapter(
   'StarRating with empty styles inside rated and unrated',
   story => {
     let rating = new StarRating(story, {
@@ -516,7 +552,7 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'StarRating orientation initially left-to-right then updating',
+  'StarRating fill red hex code',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
@@ -576,40 +612,10 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'Nonrated fill color',
+  'Justify content space-evenly',
   story => {
     let rating = new StarRating(story, {
-      "rating": 4.5,
-      "nonrated": {
-        "fill": "#00f"
-      }
-    });
-  },
-  [
-    notes('Should visualize 4.5/5 with default fill color for rated but nonrated fill is blue')
-  ]
-)
-
-ratingStory.addChapter(
-  'Nonrated fill color',
-  story => {
-    let rating = new StarRating(story, {
-      "rating": 4.5,
-      "nonrated": {
-        "fill": "#00f"
-      }
-    });
-  },
-  [
-    notes('Should visualize 4.5/5 with default fill color for rated but nonrated fill is blue')
-  ]
-)
-
-ratingStory.addChapter(
-  'Justify content stretch',
-  story => {
-    let rating = new StarRating(story, {
-      "justify-content": "stretch",
+      "justify-content": "space-evenly",
       "height": 100,
       "width": 1200
     });
@@ -662,10 +668,10 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'Justify content stretch with orientation bottom-to-top',
+  'Justify content space-evenly with orientation bottom-to-top',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "stretch",
+      "justify-content": "space-evenly",
       "orientation": "bottom-to-top",
       "height": 1200,
       "width": 100
@@ -682,8 +688,8 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "justify-content": "end",
       "orientation": "top-to-bottom",
-      "height": 100,
-      "width": 1200
+      "height": 1200,
+      "width": 100
     });
   },
   [
@@ -707,7 +713,7 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'padding < 2 or negative',
+  'padding < 1 or negative',
   story => {
     let rating = new StarRating(story, {
       "justify-content": "center",
@@ -742,7 +748,7 @@ ratingStory.addChapter(
   'Justify content end with orientation top-to-bottom',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "stretch",
+      "justify-content": "space-evenly",
       "orientation": "top-to-bottom",
       "height": 1200,
       "width": 100,
