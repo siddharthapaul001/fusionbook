@@ -744,8 +744,8 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "justify-content": "stretch",
       "orientation": "top-to-bottom",
-      "height": 100,
-      "width": 1200,
+      "height": 1200,
+      "width": 100,
       "padding": 4,
       "stroke-width": 5,
       "rated": {
