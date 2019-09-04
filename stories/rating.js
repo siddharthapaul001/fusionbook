@@ -201,6 +201,70 @@ ratingStory.addChapter(
 
 //IMPORTANT
 ratingStory.addChapter(
+  'vital rating update',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "stars": 10
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "stars": 15
+      });
+    }, 3000);
+  },
+  [
+    notes('First it should visualize 10/10 rating then it should visualize 15/15 NOT 10/15')
+  ]
+)
+
+//IMPORTANT
+ratingStory.addChapter(
+  'vital rating update error',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "stars": 10,
+      "rating": 9.6
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "stars": 5
+      });
+    }, 3000);
+  },
+  [
+    notes('First it should visualize 9.6/10 rating then it should give an error as 9.6/5 is not possible')
+  ]
+)
+
+//IMPORTANT
+ratingStory.addChapter(
+  'vital rating update should not error',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "stars": 10
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "stars": 5
+      });
+    }, 3000);
+  },
+  [
+    notes('First it should visualize 10/10 rating then it should visualize 5/5 rating')
+  ]
+)
+
+//IMPORTANT
+ratingStory.addChapter(
   'On update prevention check other attributes changes',
   story => {
     let rating = new StarRating(story, {
