@@ -127,7 +127,7 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'rating in default 5 stars in default height width and update',
+  'rating 2.69 in default 5 stars in default height width and update rating to 4.5',
   story => {
     let rating = new StarRating(story, {
       "rating": 2.69
@@ -201,7 +201,7 @@ ratingStory.addChapter(
 
 //IMPORTANT
 ratingStory.addChapter(
-  'vital rating update',
+  'vital rating update 10/10 then 15/15 always full fill when rating not provided',
   story => {
     let rating = new StarRating(story, {
       "width": 1200, 
@@ -220,9 +220,32 @@ ratingStory.addChapter(
   ]
 )
 
+
 //IMPORTANT
 ratingStory.addChapter(
-  'vital rating update error',
+  'vital rating update 10/10 then 10/15',
+  story => {
+    let rating = new StarRating(story, {
+      "width": 1200, 
+      "height": 600, 
+      "rating": "10",
+      "stars": 10
+    });
+
+    setTimeout(function(){
+      rating.update({
+        "stars": 15
+      });
+    }, 3000);
+  },
+  [
+    notes('First it should visualize 10/10 rating then it should visualize 15/15 NOT 10/15')
+  ]
+)
+
+//IMPORTANT
+ratingStory.addChapter(
+  'vital rating update 9.6/10 then error',
   story => {
     let rating = new StarRating(story, {
       "width": 1200, 
@@ -288,16 +311,18 @@ ratingStory.addChapter(
 
 //CONFUSING TO USER
 ratingStory.addChapter(
-  'Check stroke-with attribute without style attributes',
+  'Check stroke-width attribute without style attributes',
   story => {
     let rating = new StarRating(story, {
       "width": 1200, 
       "height": 600,
       "stroke-width": '5',
+      'rating': 8.8,
+      'stars': 9
     });
   },
   [
-    notes('It should visualize 5/5 rating stroke-width: 5px with default styles i.e stroke color none(not visible) so give a warning')
+    notes('It should visualize 8.8/9 rating stroke-width: 5px with default styles i.e stroke color none(not visible) so give a warning')
   ]
 )
 
@@ -444,7 +469,7 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'StarRating orientation initially left-to-right then updating',
+  'StarRating orientation initially left-to-right then updating to right-to-left',
   story => {
     let rating = new StarRating(story, {
       "width": 1200, 
@@ -460,7 +485,7 @@ ratingStory.addChapter(
     }, 3000);
   },
   [
-    notes('Initially should visualize 4.5/5 horizontally and orientation should be left-to-right after 3s orientation should be right-to-left and after 6s it should show error but remain in prevous state')
+    notes('Initially should visualize 4.5/5 horizontally and orientation should be left-to-right after 3s orientation should be right-to-left')
   ]
 )
 
@@ -506,7 +531,7 @@ ratingStory.addChapter(
 
 
 ratingStory.addChapter(
-  'StarRating orientation top-to-bottom align-items end',
+  'StarRating orientation top-to-bottom align-items end then updating to R2L-end and then R2L-start',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
@@ -582,17 +607,24 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'Incorrect hex color code',
+  'Rated fill in RGB garbage and then update to string blue',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
       "rated": {
-        "fill": "#xyz"
+        "fill": "rgb(xyz,0,0)"
       }
     });
+    setTimeout(function(){
+      rating.update({
+        "rated": {
+          "fill": "blue"
+        }
+      });
+    }, 3000);
   },
   [
-    notes('Should visualize 4.5/5 with default fill color and raise error notifying improper hex code')
+    notes('Rated fill of rating 4.5/5 should have rated fill color red and after 3s fill blue')
   ]
 )
 
@@ -745,11 +777,12 @@ ratingStory.addChapter(
 
 //THE COMPLETE ONE
 ratingStory.addChapter(
-  'Justify content end with orientation top-to-bottom',
+  'All attributes are provided and valid',
   story => {
     let rating = new StarRating(story, {
       "justify-content": "space-evenly",
       "orientation": "top-to-bottom",
+      "align-items": "center",
       "height": 1200,
       "width": 100,
       "padding": 4,
@@ -767,7 +800,89 @@ ratingStory.addChapter(
     });
   },
   [
-    notes('Should visualize 5/5 rating vertically but alignment from bottom')
+    notes('Should visualize 8.6/10 rating vertically with exenly spaced')
+  ]
+)
+
+//THE COMPLETE TWO
+ratingStory.addChapter(
+  'Check prettyness when stroke width and padding is at highest limit',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "space-evenly",
+      "orientation": "top-to-bottom",
+      "align-items": "end",
+      "height": 1200,
+      "width": 100,
+      "padding": 10,
+      "stroke-width": 10,
+      "rated": {
+        "fill": "#f00",
+        "stroke": "#000"
+      },
+      "nonrated": {
+        "fill": "#00f",
+        "stroke": "#f00"
+      },
+      "rating": 8.6,
+      "stars": 10
+    });
+  },
+  [
+    notes('Should visualize 8.6/10 rating vertically with evenly spaced. Though align items end but should not have effect')
+  ]
+)
+
+//THE COMPLETE garbage
+ratingStory.addChapter(
+  'Check all garbage values except rating and stars',
+  story => {
+    let rating = new StarRating(story, {
+      "justify-content": "garbage",
+      "orientation": "garbage",
+      "align-items": "garbage",
+      "height": "garbage",
+      "width": "garbage",
+      "padding": "garbage",
+      "stroke-width": "ddd",
+      "rated": {
+        "fill": "#garbage",
+        "stroke": "#garbage"
+      },
+      "nonrated": {
+        "fill": "#garbage",
+        "stroke": "#garbage"
+      },
+      "rating": 1.45,
+      "stars": 3
+    });
+  },
+  [
+    notes('Should visualize 1.45/3 with all defaults')
+  ]
+)
+
+ratingStory.addChapter(
+  'Stress Testing',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "stars": 5
+    }),
+    T = 1, startTime = ((new Date()).getTime() * 1), time = 0;
+    while(time < 100){
+      rating.update({
+        "rating": 4.5 + T,
+        "stars": 5 + T,
+        "width": 400 + T * 100
+      });
+      time =  ((new Date()).getTime() * 1) - startTime;
+      T++;
+    }
+    console.log(T + ' tests in ' + time + 'ms');
+  },
+  [
+    notes('Should visualize rating update and log no of tests done in 100ms')
   ]
 )
 

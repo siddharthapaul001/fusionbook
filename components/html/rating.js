@@ -1,3 +1,14 @@
+/**
+  * Validate size and splits into number and unit.
+  * This function converts size into a easy to handle object
+  *
+  * @param   {string} size
+  *          size in string or a number to validate and digest
+  * @param   {string} str
+  *          str is the string to concat with the error message for easy understanding
+  * @returns {object} resolvedSize
+  *          returns resolvedSize which contains num to store numeric size value and unit to store its unit
+*/
 function _pluckSize(size, str) {
     str = str ? 'of ' + str : '';
     let num = (size + '').match(/\d+/g),
@@ -17,6 +28,15 @@ function _pluckSize(size, str) {
     };
 }
 
+/**
+  * Validate color if color is in hexcode or rgb otherwise.
+  * Used to check if the given fill / stroke color code is valid
+  * 
+  * @param   {string} color
+  *          size in string or a number to validate and digest
+  * @returns {boolean} isValid
+  *          returns true if color is valid otherwise false
+*/
 function _validateColorCode(color) {
     if (!color) {
         return false;
@@ -39,11 +59,37 @@ function _validateColorCode(color) {
     return true;
 }
 
+
+/**
+  * Checks if number is fractional or not.
+  * Required to set gradient for fractunal rating
+  * 
+  * @param   {number} num
+  *          num denotes the number to check
+  * @returns {boolean} isFraction
+  *          returns true if input num is in fraction otherwise false
+*/
 function _isFraction(num) {
     return !(Math.abs(num - Math.floor(num)) < Number.EPSILON);
 }
 
+/**
+  * StarRating Class is the main class which needs to be instantiate in order to use star raring.
+*/
 class StarRating {
+
+    /**
+    * Constructor of StarRating
+    * Sets all predefined defaults and run all requred steps to instantiate StarRating
+    * 
+    * @param   {HTMLElement} parentElement
+    *          parentElement is the html element where the svg for starrating reside
+    * @param   {object} attribs
+    *          attribs stores all user given attributes
+    * 
+    * @returns {object} starRating
+    *          returns instance of StarRating class
+    */
     constructor(parentElement, attribs) {
         //check if parentElement is a HTMLElement otherwise show and error and stop execution
         if (!(parentElement instanceof HTMLElement)) {
@@ -55,7 +101,7 @@ class StarRating {
         //setting defaults
         this.height = 400;
         this.width = 400;
-        this.N = 5;
+        this.N = 5; //N denotes number of stars
         this.rating = undefined;
         this.orientation = 'left-to-right';
         this.padding = 1;
@@ -67,7 +113,8 @@ class StarRating {
         this.ratedStroke = "none";
         this.nonratedStroke = "none";
         /*
-        this.styles = {
+        The styleset object structure to handle
+        {
             "rated": {
                 "fill": "#ff0",
                 "stroke": "none"
@@ -100,6 +147,24 @@ class StarRating {
         }
     }
 
+
+    /**
+    * 
+    * Validate and then set all required attributes
+    * This function validates and decides whether StarRating should render user provided attributes
+    * or default / previously set attributes. It also determines whether StarRating should stop execution
+    * 
+    * @private
+    * 
+    * @memberof StarRating
+    * 
+    * @param   {object} attribs
+    *          attribs stores all user given attributes
+    * 
+    * @returns {boolean} shouldContinue
+    *           shouldContinue holds the decision whether to stop execution or not
+    *          
+    */
     _validateAndSet(attribs) {
         let height = _pluckSize(attribs['height'], 'Height'),
             width = _pluckSize(attribs['width'], 'Width'),
@@ -205,7 +270,7 @@ class StarRating {
         } else {
             console.error("Paddding value allowed only as number or pixels");
         }
-        if(padding < 1){
+        if (padding < 1) {
             console.error("Incorrect padding.");
             padding = this.padding;
         }
@@ -241,16 +306,16 @@ class StarRating {
         //Do calculation to check managable conditions
         if (shouldContinue) {
             sideOut = Math.min(direction == 'row' ? width / N : width, direction == 'column' ? height / N : height);
-            if(strokeWidth < 0 || strokeWidth > 0.10 * sideOut){
+            if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
                 console.error("Incorrect stroke-width");
                 strokeWidth = this.strokeWidth;
             }
-            if(padding < 1 || padding > 0.10 * sideOut){
+            if (padding < 1 || padding > 0.10 * sideOut) {
                 console.error("Incorrect padding");
                 padding = this.padding;
             }
             side = sideOut - (padding * 2) - (strokeWidth * 2);
-            console.log(sideOut, side, padding, strokeWidth);
+            //console.log(sideOut, side, padding, strokeWidth);
             if (sideOut < 16) {
                 console.error("Could not acomodate so many stars. Reduce no of stars");
                 shouldContinue = false;
@@ -302,6 +367,19 @@ class StarRating {
             this.side = side;
             this.sideOut = sideOut;
             this.strokeWidth = strokeWidth;
+
+            //Show a warning if stroke width is given but stroke-color is None as stroke is none show not visible
+            if(this.strokeWidth > 0){
+                if(this.ratedStroke == 'none'){
+                    console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting rated stroke color as black");
+                    this.ratedStroke = '#000';
+                }
+                if(this.nonratedStroke == 'none'){
+                    console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting nonrated stroke color as black");
+                    this.nonratedStroke = '#000';
+                }
+            }
+
             this.justifyContent = justifyContent;
             this.alignItems = alignItems;
             //extract direction and flow from orientation
@@ -314,6 +392,26 @@ class StarRating {
         return shouldContinue;
     }
 
+
+    /**
+    * 
+    * generates the path string for d attribute of star's path
+    * 
+    * @private
+    * 
+    * @memberof StarRating
+    * 
+    * @param    {number} side
+    *           side denotes the size of a side of inner bounding box (i.e square)
+    * @param    {number} X
+    *           X denotes the absolute horizontal displacement for horizontal middle of the star
+    * @param    {number} Y
+    *           Y denotes the absolute horizontal displacement for the star
+    * 
+    * @returns {string} path
+    *           path holds the path string for star
+    *          
+    */
     _getPathString(side, X, Y) {
         let str = "M" + X + "," + Y,
             ax = 0.15,
@@ -340,6 +438,17 @@ class StarRating {
         return str;
     }
 
+
+    /**
+    * 
+    * Generates linear gradient in svg definitions 
+    * This function is used for partial color filling for fractional rating 
+    * 
+    * @private
+    * 
+    * @memberof StarRating
+    *          
+    */
     _createGradientDefinitions() {
         let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"),
             linearGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient"),
@@ -425,9 +534,20 @@ class StarRating {
         this.svg.appendChild(defs);
     }
 
+
+
+    /**
+    * 
+    * Draw the stars with all the attributes
+    * 
+    * @private
+    * 
+    * @memberof StarRating
+    *          
+    */
     _draw() {
-        let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0, 
-        rating = !this.rating && this.rating != 0 ? this.N : this.rating; //to handle 0 check
+        let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
+            rating = !this.rating && this.rating != 0 ? this.N : this.rating; //to handle 0 check
         //Adjust no of star
         //Append if extra needed
         for (i = this.stars.length; i < this.N; i++) {
@@ -457,14 +577,14 @@ class StarRating {
             } else if (this.justifyContent == 'space-evenly') {
                 xShift = this.width / this.N;
                 baseX = xShift / 2;
-                console.log('space-evenly');
+                //console.log('space-evenly');
             }
-            if(this.alignItems == 'center'){
+            if (this.alignItems == 'center') {
                 baseY = ((this.sideOut - this.side) / 2) + ((this.height - this.sideOut) / 2);
-            }else if(this.alignItems == 'start'){
+            } else if (this.alignItems == 'start') {
                 baseY = ((this.sideOut - this.side) / 2);
-            }else if(this.alignItems == 'end'){
-                baseY = (this.height - this.sideOut); 
+            } else if (this.alignItems == 'end') {
+                baseY = (this.height - this.sideOut);
             }
         } else if (this.direction == 'column') {
             yShift = this.sideOut;
@@ -479,12 +599,12 @@ class StarRating {
                 baseY = (yShift - this.side) / 2;
             }
 
-            console.log(this.alignItems);
-            if(this.alignItems == 'center'){
+            //console.log(this.alignItems);
+            if (this.alignItems == 'center') {
                 baseX = (this.sideOut / 2) + ((this.width - this.sideOut) / 2);
-            }else if(this.alignItems == 'start'){
+            } else if (this.alignItems == 'start') {
                 baseX = this.sideOut / 2;
-            }else if(this.alignItems == 'end'){
+            } else if (this.alignItems == 'end') {
                 baseX = this.width - (this.sideOut / 2);
             }
         }
@@ -509,12 +629,23 @@ class StarRating {
             this.stars[i].setAttribute("stroke-width", this.strokeWidth + "px");
         }
 
-        //Remove
+        //Remove stars which are currently not needed
         for (i = this.stars.length - 1; i >= this.N; i--) {
             this.svg.removeChild(this.stars.pop());
         }
     }
 
+    /**
+    * 
+    * Update star rating with all changed attributes
+    * 
+    * 
+    * @memberof StarRating
+    * 
+    * @param   {object} attribs
+    *          attribs stores all user given attributes
+    *          
+    */
     update(attribs) {
         if (attribs) {
             if (this._validateAndSet(attribs)) {
