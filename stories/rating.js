@@ -267,7 +267,7 @@ ratingStory.addChapter(
 
 //IMPORTANT
 ratingStory.addChapter(
-  'vital rating update should not error',
+  'vital rating update 10/10 to 5/5. It should not give error',
   story => {
     let rating = new StarRating(story, {
       "width": 1200, 
@@ -367,12 +367,12 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'Check stroke-with attribute with style attributes',
+  'Check stroke-width in negative',
   story => {
     let rating = new StarRating(story, {
       "width": 1200, 
       "height": 600,
-      "stroke-width": '-5',
+      "stroke-width": -5,
       "rated":{
         "fill": "#ff0",
         "stroke": "#000"
@@ -862,6 +862,34 @@ ratingStory.addChapter(
   ]
 )
 
+ratingStory.addChapter(
+  'Padding / stroke should be reset to default',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "stars": 5,
+      "stroke-width": 5,
+      "padding": 5,
+      "rated": {
+        "stroke": "#000"
+      },
+      "nonrated": {
+        "stroke": "#aaa"
+      }
+    });
+    setTimeout(function(){
+      rating.update({
+        "height": 400,
+        "width": 120
+      });
+    }, 3000);    
+  },
+  [
+    notes('Should visualize two cases but for update it should remove stroke / padding')
+  ]
+)
+
+//STRESS TESTING
 ratingStory.addChapter(
   'Stress Testing',
   story => {

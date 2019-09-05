@@ -13,15 +13,16 @@ function _pluckSize(size, str) {
     str = str ? 'of ' + str : '';
     let num = (size + '').match(/\d+/g),
         unit = (size + '').match(/px|%|vh|vw/g) || [''];
-    if (!num) {
+    if (!num || ((size + '').trim().startsWith('-'))) {
         if (size) {
-            console.error("Error in size value" + str);
+            console.error("Error in size value " + str);
         }
         return {
             num: null,
             unit: ''
         };
     }
+
     return {
         num: +num[0],
         unit: unit[0]
@@ -73,6 +74,50 @@ function _isFraction(num) {
     return !(Math.abs(num - Math.floor(num)) < Number.EPSILON);
 }
 
+
+
+/**
+* 
+* generates the path string for d attribute of star's path
+* 
+* 
+* @param    {number} side
+*           side denotes the size of a side of inner bounding box (i.e square)
+* @param    {number} X
+*           X denotes the absolute horizontal displacement for horizontal middle of the star
+* @param    {number} Y
+*           Y denotes the absolute horizontal displacement for the star
+* 
+* @returns {string} path
+*           path holds the path string for star
+*          
+*/
+function _getPathString(side, X, Y) {
+    let str = "M" + X + "," + Y,
+        ax = 0.15,
+        bx = (1 - 2 * ax) / 2,
+        cx = 0.3,
+        dx = 0.5,
+        ex = 0.3,
+        ay = 0.3, by = 0.3,
+        cy = (1 - ay - by),
+        dy = 0.25,
+        am = ax / ay;
+    cx = (am * cy);
+    ex = ex * am;
+    str += " l" + (ax * side) + "," + (ay * side);
+    str += " h" + (bx * side);
+    str += " l-" + (cx * side) + "," + (by * side);
+    str += " l" + (cx * side) + "," + (cy * side);
+    str += " l-" + (dx * side) + ",-" + (dy * side);
+    str += " l-" + (dx * side) + "," + (dy * side);
+    str += " l" + (cx * side) + ",-" + (cy * side);
+    str += " l-" + (cx * side) + ",-" + (by * side);
+    str += " h" + (bx * side);
+    str += " z";
+    return str;
+}
+
 /**
   * StarRating Class is the main class which needs to be instantiate in order to use star raring.
 */
@@ -101,7 +146,7 @@ class StarRating {
         //setting defaults
         this.height = 400;
         this.width = 400;
-        this.N = 5; //N denotes number of stars
+        this.TotalStars = 5; //N denotes number of stars
         this.rating = undefined;
         this.orientation = 'left-to-right';
         this.padding = 1;
@@ -143,6 +188,8 @@ class StarRating {
             }
         } else {
             this._validateAndSet({});
+            //this.sideOut = Math.min(this.direction == 'row' ? this.width / this.TotalStars : this.width, this.direction == 'column' ? this.height / this.TotalStars : this.height);
+            //this.side = this.sideOut - this.padding * 2 - this.strokeWidth * 2;
             this._draw();
         }
     }
@@ -211,7 +258,7 @@ class StarRating {
 
         //check if number of stars => N is ok otherwise set the default value 5
         if (!+N) {
-            N = this.N;
+            N = this.TotalStars;
         }
         if (N <= 0) {
             console.error("No of stars must be greater than 0");
@@ -324,25 +371,25 @@ class StarRating {
                 if (padding > 2) {
                     console.error("Decrease padding.");
                     padding = this.padding;
-                    side = sideOut - padding * 4 - strokeWidth * 4;
+                    side = sideOut - padding * 2 - strokeWidth * 2;
                 } else if (strokeWidth > (0.10 * sideOut)) {
                     console.error("Decrease stroke-width.");
                     strokeWidth = this.strokeWidth;
-                    side = sideOut - (padding * 2) - (strokeWidth * 4);
+                    side = sideOut - (padding * 2) - (strokeWidth * 2);
                 }
             }
 
             //If still side is less than 10 set padding and stroke-width to 2 and 0
-            if (side < 10) {
-                if (padding > 2) {
-                    console.warn("Automatically setting padding to default");
-                    padding = 2;
-                    side = sideOut - (padding * 4) - (strokeWidth * 4);
-                } else if (strokeWidth > (0.10 * sideOut)) {
-                    console.error("Automatically setting stroke-width to 0");
-                    strokeWidth = 0;
-                    side = sideOut - (padding * 4) - (strokeWidth * 4);
-                }
+            //console.log(side);
+            if (side < 10 && padding > 2) {
+                console.warn("Automatically setting padding to default");
+                padding = 2;
+                side = sideOut - (padding * 2) - (strokeWidth * 2);
+            }
+            if (side < 10 && strokeWidth > 0) {
+                console.warn("Automatically setting stroke-width to 0");
+                strokeWidth = 0;
+                side = sideOut - (padding * 2) - (strokeWidth * 2);
             }
 
             //If still side is less than 10 non-managable
@@ -359,7 +406,7 @@ class StarRating {
             this.orientation = orientation;
             this.padding = padding;
             this.rating = rating;
-            this.N = N;
+            this.TotalStars = N;
             this.ratedFill = styles['rated']['fill'];
             this.ratedStroke = styles['rated']['stroke'];
             this.nonratedFill = styles['nonrated']['fill'];
@@ -369,12 +416,12 @@ class StarRating {
             this.strokeWidth = strokeWidth;
 
             //Show a warning if stroke width is given but stroke-color is None as stroke is none show not visible
-            if(this.strokeWidth > 0){
-                if(this.ratedStroke == 'none'){
+            if (this.strokeWidth > 0) {
+                if (this.ratedStroke == 'none') {
                     console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting rated stroke color as black");
                     this.ratedStroke = '#000';
                 }
-                if(this.nonratedStroke == 'none'){
+                if (this.nonratedStroke == 'none') {
                     console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting nonrated stroke color as black");
                     this.nonratedStroke = '#000';
                 }
@@ -390,52 +437,6 @@ class StarRating {
             this.svg.setAttribute("height", this.height);
         }
         return shouldContinue;
-    }
-
-
-    /**
-    * 
-    * generates the path string for d attribute of star's path
-    * 
-    * @private
-    * 
-    * @memberof StarRating
-    * 
-    * @param    {number} side
-    *           side denotes the size of a side of inner bounding box (i.e square)
-    * @param    {number} X
-    *           X denotes the absolute horizontal displacement for horizontal middle of the star
-    * @param    {number} Y
-    *           Y denotes the absolute horizontal displacement for the star
-    * 
-    * @returns {string} path
-    *           path holds the path string for star
-    *          
-    */
-    _getPathString(side, X, Y) {
-        let str = "M" + X + "," + Y,
-            ax = 0.15,
-            bx = (1 - 2 * ax) / 2,
-            cx = 0.3,
-            dx = 0.5,
-            ex = 0.3,
-            ay = 0.3, by = 0.3,
-            cy = (1 - ay - by),
-            dy = 0.25,
-            am = ax / ay;
-        cx = (am * cy);
-        ex = ex * am;
-        str += " l" + (ax * side) + "," + (ay * side);
-        str += " h" + (bx * side);
-        str += " l-" + (cx * side) + "," + (by * side);
-        str += " l" + (cx * side) + "," + (cy * side);
-        str += " l-" + (dx * side) + ",-" + (dy * side);
-        str += " l-" + (dx * side) + "," + (dy * side);
-        str += " l" + (cx * side) + ",-" + (cy * side);
-        str += " l-" + (cx * side) + ",-" + (by * side);
-        str += " h" + (bx * side);
-        str += " z";
-        return str;
     }
 
 
@@ -547,10 +548,10 @@ class StarRating {
     */
     _draw() {
         let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
-            rating = !this.rating && this.rating != 0 ? this.N : this.rating; //to handle 0 check
+            rating = !this.rating && this.rating != 0 ? this.TotalStars : this.rating; //to handle 0 check
         //Adjust no of star
         //Append if extra needed
-        for (i = this.stars.length; i < this.N; i++) {
+        for (i = this.stars.length; i < this.TotalStars; i++) {
             let elem = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             //Improvement needed
             this.svg.appendChild(elem);
@@ -571,11 +572,11 @@ class StarRating {
             if (this.justifyContent == 'start') {
                 baseX = (this.sideOut / 2);
             } else if (this.justifyContent == 'center') {
-                baseX = (this.sideOut / 2) + ((this.width - (this.sideOut * this.N)) / 2);
+                baseX = (this.sideOut / 2) + ((this.width - (this.sideOut * this.TotalStars)) / 2);
             } else if (this.justifyContent == 'end') {
-                baseX = (this.width - (this.sideOut * this.N)) - (this.sideOut / 2);
+                baseX = (this.width - (this.sideOut * this.TotalStars)) - (this.sideOut / 2);
             } else if (this.justifyContent == 'space-evenly') {
-                xShift = this.width / this.N;
+                xShift = this.width / this.TotalStars;
                 baseX = xShift / 2;
                 //console.log('space-evenly');
             }
@@ -593,9 +594,9 @@ class StarRating {
             } else if (this.justifyContent == 'center') {
                 baseY = ((this.sideOut - this.side) / 2);
             } else if (this.justifyContent == 'end') {
-                baseY = (this.height - (this.sideOut * this.N));
+                baseY = (this.height - (this.sideOut * this.TotalStars));
             } else if (this.justifyContent == 'space-evenly') {
-                yShift = this.height / this.N;
+                yShift = this.height / this.TotalStars;
                 baseY = (yShift - this.side) / 2;
             }
 
@@ -611,7 +612,7 @@ class StarRating {
 
         for (i = 0; i < this.stars.length; i++) {
             this.stars[i].setAttribute('d',
-                this._getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
+                _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
             );
         }
 
@@ -630,7 +631,7 @@ class StarRating {
         }
 
         //Remove stars which are currently not needed
-        for (i = this.stars.length - 1; i >= this.N; i--) {
+        for (i = this.stars.length - 1; i >= this.TotalStars; i--) {
             this.svg.removeChild(this.stars.pop());
         }
     }
