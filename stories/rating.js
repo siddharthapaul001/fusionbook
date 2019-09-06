@@ -880,7 +880,7 @@ ratingStory.addChapter(
     setTimeout(function(){
       rating.update({
         "height": 400,
-        "width": 120
+        "width": 100
       });
     }, 3000);    
   },
