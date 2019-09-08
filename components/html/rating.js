@@ -123,7 +123,8 @@ class SVGElement {
     }
 
     getSize() {
-        return [this.elem.clientHeight, this.elem.clientWidth]
+	let rect = this.elem.getBoundingClientRect();
+        return [rect.height, rect.width]
     }
 
     getElement() {
@@ -203,6 +204,7 @@ class Definition extends SVGElement {
 class SVGContainer extends SVGElement {
     constructor(parentElement, height, width) {
         super("svg");
+	this.elem.setAttribute("xmlns", "https://www.w3.org/2000/svg");
         parentElement.appendChild(this.elem);
         this.setAttributes({ height, width });
         [height, width] = this.getSize();
