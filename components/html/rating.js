@@ -719,7 +719,7 @@ class StarRating {
                 this.stars.push(new Star(this.side, baseX + (xShift * i), baseY + (yShift * i)));
                 this.svg.appendChild(this.stars[i]);
             } else if (i >= this.TotalStars) {
-                this.starts[i].pop().removeElement();
+                this.stars.pop().removeElement();
             }
             if (i < this.TotalStars) {
                 if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
