@@ -308,14 +308,13 @@ class StarRating {
             if (this._validateAndSet(attribs)) {
                 this._draw();
             } else {
-                //this.svg.removeElement();
+                this.svg.removeElement();
                 console.error("Stopping execution");
                 return null;
             }
         } else {
-            this._validateAndSet({});
-            //this.sideOut = Math.min(this.direction == 'row' ? this.width / this.TotalStars : this.width, this.direction == 'column' ? this.height / this.TotalStars : this.height);
-            //this.side = this.sideOut - this.padding * 2 - this.strokeWidth * 2;
+            this.sideOut = Math.min(this.direction == 'row' ? this.width / this.TotalStars : this.width, this.direction == 'column' ? this.height / this.TotalStars : this.height);
+            this.side = this.sideOut - this.padding * 2 - this.strokeWidth * 2;
             this._draw();
         }
     }
