@@ -123,7 +123,7 @@ class SVGElement {
     }
 
     getSize() {
-        return [ this.elem.clientHeight, this.elem.clientWidth ]
+        return [this.elem.clientHeight, this.elem.clientWidth]
     }
 
     getElement() {
@@ -138,22 +138,22 @@ class SVGElement {
         return this.attrs;
     }
 
-    appendChild(child){
-        if(child instanceof Node){
+    appendChild(child) {
+        if (child instanceof Node) {
             this.elem.appendChild(child);
-        }else if(child instanceof SVGElement){
-            this.appendChild(child.getElement());
-        }else{
+        } else if (child instanceof SVGElement) {
+            this.elem.appendChild(child.getElement());
+        } else {
             console.error("Child must be Node or SVGElement");
         }
     }
 
-    removeChild(child){
-        if(child instanceof Node){
+    removeChild(child) {
+        if (child instanceof Node) {
             this.elem.removeChild(child);
-        }else if(child instanceof SVGElement){
-            this.removeChild(child.getElement());
-        }else{
+        } else if (child instanceof SVGElement) {
+            this.elem.removeChild(child.getElement());
+        } else {
             console.error("Child must be Node or SVGElement");
         }
     }
@@ -171,23 +171,63 @@ class SVGElement {
     }
 }
 
+class Definition extends SVGElement {
+    constructor() {
+        super("defs");
+        this.linearGradient = new SVGElement("linearGradient"),
+        this.strokeLinearGradient = new SVGElement("linearGradient"),
+        this.RatedStart = new SVGElement("stop"),
+        this.RatedEnd = new SVGElement("stop"),
+        this.NonRatedStart = new SVGElement("stop"),
+        this.NonRatedEnd = new SVGElement("stop"),
+        this.strokeRatedStart = new SVGElement("stop"),
+        this.strokeRatedEnd = new SVGElement("stop"),
+        this.strokeNonRatedStart = new SVGElement("stop"),
+        this.strokeNonRatedEnd = new SVGElement("stop");
+
+        this.linearGradient.appendChild(this.RatedStart);
+        this.linearGradient.appendChild(this.RatedEnd);
+        this.linearGradient.appendChild(this.NonRatedStart);
+        this.linearGradient.appendChild(this.NonRatedEnd);
+
+        this.strokeLinearGradient.appendChild(this.strokeRatedStart);
+        this.strokeLinearGradient.appendChild(this.strokeRatedEnd);
+        this.strokeLinearGradient.appendChild(this.strokeNonRatedStart);
+        this.strokeLinearGradient.appendChild(this.strokeNonRatedEnd);
+
+        this.appendChild(this.linearGradient);
+        this.appendChild(this.strokeLinearGradient);
+    }
+}
+
 class SVGContainer extends SVGElement {
     constructor(parentElement, height, width) {
         super("svg");
         parentElement.appendChild(this.elem);
         this.setAttributes({ height, width });
-        [ height, width ] = this.getSize();
+        [height, width] = this.getSize();
         this.height = height;
         this.width = width;
     }
 
+    getDefinition() {
+        return this.def;
+    }
+
+    addDefinition(def) {
+        if (def instanceof Definition) {
+            this.appendChild(def);
+            this.def = def;
+        }
+    }
+
     update(height, width) {
         if (this.setAttributes({ height, width })) {
-            [ height, width ] = this.getSize();
+            [height, width] = this.getSize();
             this.height = height;
             this.width = width;
         }
-        return [ this.height, this.width ]
+        return [this.height, this.width]
     }
 }
 
@@ -530,89 +570,78 @@ class StarRating {
     * @memberof StarRating
     *          
     */
-    _createGradientDefinitions() {
-        let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"),
-            linearGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient"),
-            strokeLinearGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient"),
-            RatedStart = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            RatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            NonRatedStart = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            NonRatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            strokeRatedStart = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            strokeRatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            strokeNonRatedStart = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            strokeNonRatedEnd = document.createElementNS("http://www.w3.org/2000/svg", "stop"),
-            ratingFraction = 0, startFill = this.ratedFill, endFill = this.nonratedFill, startStroke = this.ratedStroke, endStroke = this.nonratedStroke;
+    _createGradientDefinitions(defs) {
+        let startFill = this.ratedFill, endFill = this.nonratedFill, startStroke = this.ratedStroke, endStroke = this.nonratedStroke,
+            ratingFraction = this.rating ? (this.rating - Math.floor(this.rating)).toFixed(2) : 0
+            ;
 
-        linearGradient.setAttribute("id", "partial-fill");
-        linearGradient.setAttribute("x1", "0%");
-        if (this.direction == 'row') {
-            linearGradient.setAttribute("x2", "100%");
-        } else if (this.direction == 'column') {
-            linearGradient.setAttribute("x2", "0%");
-        }
-        linearGradient.setAttribute("y1", "0%");
-        if (this.direction == 'column') {
-            linearGradient.setAttribute("y2", "100%");
-        } else if (this.direction == 'row') {
-            linearGradient.setAttribute("y2", "0%");
+        if(!defs){
+            defs = new Definition();
         }
 
-        strokeLinearGradient.setAttribute("id", "partial-stroke");
-        strokeLinearGradient.setAttribute("x1", "0%");
-        if (this.direction == 'row') {
-            strokeLinearGradient.setAttribute("x2", "100%");
-        } else if (this.direction == 'column') {
-            strokeLinearGradient.setAttribute("x2", "0%");
-        }
-        strokeLinearGradient.setAttribute("y1", "0%");
-        if (this.direction == 'column') {
-            strokeLinearGradient.setAttribute("y2", "100%");
-        } else if (this.direction == 'row') {
-            strokeLinearGradient.setAttribute("y2", "0%");
-        }
+        defs.linearGradient.setAttributes({
+            "id": "partial-fill",
+            "x1": "0%",
+            "x2": this.direction == 'row' ? "100%" : "0%",
+            "y1": "0%",
+            "y2": this.direction == 'column' ? "100%" : "0%"
+        });
 
-        ratingFraction = this.rating ? (this.rating - Math.floor(this.rating)).toFixed(2) : 0;
+        defs.strokeLinearGradient.setAttributes({
+            "id": "partial-stroke",
+            "x1": "0%",
+            "x2": this.direction == 'row' ? "100%" : 0,
+            "y1": "0%",
+            "y2": this.direction == 'column' ? "100%" : 0
+        });
+
         if (this.flow == 'reverse') {
-            ratingFraction = 1 - ratingFraction;
             startFill = this.nonratedFill;
             endFill = this.ratedFill;
             startStroke = this.nonratedStroke;
             endStroke = this.ratedStroke;
         }
 
-        RatedStart.setAttribute("offset", "0%");
-        RatedEnd.setAttribute("offset", (ratingFraction * 100) + "%");
-        NonRatedStart.setAttribute("offset", (ratingFraction * 100) + "%");
-        NonRatedEnd.setAttribute("offset", "100%");
-        RatedStart.setAttribute("style", "stop-color:" + startFill + ";stop-opacity:1;");
-        RatedEnd.setAttribute("style", "stop-color:" + startFill + ";stop-opacity:1;");
-        NonRatedStart.setAttribute("style", "stop-color:" + endFill + ";stop-opacity:1;");
-        NonRatedEnd.setAttribute("style", "stop-color:" + endFill + ";stop-opacity:1;");
+        defs.RatedStart.setAttributes({
+            "offset": "0%",
+            "style": "stop-color:" + startFill + ";stop-opacity:1;"
+        });
+        defs.RatedEnd.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + startFill + ";stop-opacity:1;"
+        });
 
-        strokeRatedStart.setAttribute("offset", "0%");
-        strokeRatedEnd.setAttribute("offset", (ratingFraction * 100) + "%");
-        strokeNonRatedStart.setAttribute("offset", (ratingFraction * 100) + "%");
-        strokeNonRatedEnd.setAttribute("offset", "100%");
-        strokeRatedStart.setAttribute("style", "stop-color:" + startStroke + ";stop-opacity:1;");
-        strokeRatedEnd.setAttribute("style", "stop-color:" + startStroke + ";stop-opacity:1;");
-        strokeNonRatedStart.setAttribute("style", "stop-color:" + endStroke + ";stop-opacity:1;");
-        strokeNonRatedEnd.setAttribute("style", "stop-color:" + endStroke + ";stop-opacity:1;");
+        defs.NonRatedStart.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + endFill + ";stop-opacity:1;"
+        });
 
+        defs.NonRatedEnd.setAttributes({
+            "offset": "100%",
+            "style": "stop-color:" + endFill + ";stop-opacity:1;"
+        });
 
-        linearGradient.appendChild(RatedStart);
-        linearGradient.appendChild(RatedEnd);
-        linearGradient.appendChild(NonRatedStart);
-        linearGradient.appendChild(NonRatedEnd);
+        defs.strokeRatedStart.setAttributes({
+            "offset": "0%",
+            "style": "stop-color:" + startStroke + ";stop-opacity:1;"
+        });
 
-        strokeLinearGradient.appendChild(strokeRatedStart);
-        strokeLinearGradient.appendChild(strokeRatedEnd);
-        strokeLinearGradient.appendChild(strokeNonRatedStart);
-        strokeLinearGradient.appendChild(strokeNonRatedEnd);
+        defs.strokeRatedEnd.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + startStroke + ";stop-opacity:1;"
+        });
 
-        defs.appendChild(linearGradient);
-        defs.appendChild(strokeLinearGradient);
-        this.svg.appendChild(defs);
+        defs.strokeNonRatedStart.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + endStroke + ";stop-opacity:1;"
+        });
+
+        defs.strokeNonRatedEnd.setAttributes({
+            "offset": "100%",
+            "style": "stop-color:" + endStroke + ";stop-opacity:1;"
+        });
+
+        this.svg.addDefinition(defs);
     }
 
 
@@ -630,27 +659,15 @@ class StarRating {
         let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
             rating = !this.rating && this.rating != 0 ? this.TotalStars : this.rating,
             currentStars = this.stars.length; //to handle 0 check
-        //Adjust no of star
-        //Append if extra needed
-        // for (i = this.stars.length; i < this.TotalStars; i++) {
-        //     let elem = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        //     //Improvement needed
-        //     this.svg.appendChild(elem);
-        //     this.stars.push(elem);
-        // }
-
-        // //Remove stars which are currently not needed
-        // for (i = this.stars.length - 1; i >= this.TotalStars; i--) {
-        //     this.svg.removeChild(this.stars.pop());
-        // }
 
         //remove def if exist
-        let defs = this.svg.getElement().getElementsByTagName("defs");
-        if (defs.length > 0) {
-            this.svg.removeChild(defs[0]);
-        }
+        let defs = this.svg.getDefinition();
+        
         if (_isFraction(rating)) {
-            this._createGradientDefinitions();
+            this._createGradientDefinitions(defs);
+        }else if(defs){
+            defs.removeElement();
+            delete this.svg.defs;
         }
 
         if (this.direction == 'row') {
@@ -660,7 +677,7 @@ class StarRating {
             } else if (this.justifyContent == 'center') {
                 baseX = (this.sideOut / 2) + ((this.width - (this.sideOut * this.TotalStars)) / 2);
             } else if (this.justifyContent == 'end') {
-                baseX = (this.width - (this.sideOut * this.TotalStars)) - (this.sideOut / 2);
+                baseX = (this.width - (this.sideOut * this.TotalStars)) + (this.sideOut / 2);
             } else if (this.justifyContent == 'space-evenly') {
                 xShift = this.width / this.TotalStars;
                 baseX = xShift / 2;
@@ -696,15 +713,15 @@ class StarRating {
             }
         }
 
-        for (i = 0; i < Math.max(currentStars, this.TotalStars); i++){
+        for (i = 0; i < Math.max(currentStars, this.TotalStars); i++) {
             j = this.flow == 'reverse' ? this.TotalStars - i - 1 : i;
-            if(i >= currentStars){
+            if (i >= currentStars) {
                 this.stars.push(new Star(this.side, baseX + (xShift * i), baseY + (yShift * i)));
                 this.svg.appendChild(this.stars[i]);
-            }else if(i >= this.TotalStars){
+            } else if (i >= this.TotalStars) {
                 this.starts[i].pop().removeElement();
             }
-            if(i < this.TotalStars){
+            if (i < this.TotalStars) {
                 if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
                     this.stars[i].setAttributes({
                         "fill": "url(#partial-fill)",
@@ -722,26 +739,6 @@ class StarRating {
                 }
             }
         }
-
-        // for (i = 0; i < this.stars.length; i++) {
-        //     this.stars[i].setAttribute('d',
-        //         _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
-        //     );
-        // }
-
-
-        //setting colors
-        // for (i = 0; i < this.stars.length; i++) {
-        //     j = this.flow == 'reverse' ? this.stars.length - i - 1 : i;
-        //     if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
-        //         this.stars[i].setAttribute("fill", "url(#partial-fill)");
-        //         this.stars[i].setAttribute("stroke", "url(#partial-stroke)");
-        //     } else {
-        //         this.stars[i].setAttribute("fill", j < Math.ceil(rating) ? this.ratedFill : this.nonratedFill);
-        //         this.stars[i].setAttribute("stroke", j < Math.ceil(rating) ? this.ratedStroke : this.nonratedStroke);
-        //     }
-        //     this.stars[i].setAttribute("stroke-width", this.strokeWidth + "px");
-        // }
     }
 
     /**
