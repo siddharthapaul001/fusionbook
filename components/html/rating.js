@@ -74,8 +74,6 @@ function _isFraction(num) {
     return !(Math.abs(num - Math.floor(num)) < Number.EPSILON);
 }
 
-
-
 /**
 * 
 * generates the path string for d attribute of star's path
@@ -116,6 +114,95 @@ function _getPathString(side, X, Y) {
     str += " h" + (bx * side);
     str += " z";
     return str;
+}
+
+class SVGElement {
+    constructor(tag) {
+        this.elem = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        this.attrs = {};
+    }
+
+    getSize() {
+        return [ this.elem.clientHeight, this.elem.clientWidth ]
+    }
+
+    getElement() {
+        return this.elem;
+    }
+
+    removeElement() {
+        this.elem.parentNode.removeChild(this.elem);
+    }
+
+    getAttributes() {
+        return this.attrs;
+    }
+
+    appendChild(child){
+        if(child instanceof Node){
+            this.elem.appendChild(child);
+        }else if(child instanceof SVGElement){
+            this.appendChild(child.getElement());
+        }else{
+            console.error("Child must be Node or SVGElement");
+        }
+    }
+
+    removeChild(child){
+        if(child instanceof Node){
+            this.elem.removeChild(child);
+        }else if(child instanceof SVGElement){
+            this.removeChild(child.getElement());
+        }else{
+            console.error("Child must be Node or SVGElement");
+        }
+    }
+
+    setAttributes(attrs) {
+        let hasChange = false;
+        for (let attrName in attrs) {
+            if (this.attrs[attrName] !== attrs[attrName]) {
+                this.elem.setAttribute(attrName, attrs[attrName]);
+                this.attrs[attrName] = attrs[attrName];
+                hasChange = true;
+            }
+        }
+        return hasChange;
+    }
+}
+
+class SVGContainer extends SVGElement {
+    constructor(parentElement, height, width) {
+        super("svg");
+        parentElement.appendChild(this.elem);
+        this.setAttributes({ height, width });
+        [ height, width ] = this.getSize();
+        this.height = height;
+        this.width = width;
+    }
+
+    update(height, width) {
+        if (this.setAttributes({ height, width })) {
+            [ height, width ] = this.getSize();
+            this.height = height;
+            this.width = width;
+        }
+        return [ this.height, this.width ]
+    }
+}
+
+class Star extends SVGElement {
+    constructor(side, X, Y) {
+        super("path");
+        this.setAttributes({ d: _getPathString(side, X, Y) });
+        this.side = side;
+        this.X = X;
+        this.Y = Y;
+    }
+
+    update(side, X, Y) {
+        return this.setAttributes({ d: _getPathString(side, X, Y) });
+    }
 }
 
 /**
@@ -174,15 +261,14 @@ class StarRating {
         //usefull internally
         this.direction = 'row';
         this.flow = '';
-        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.parentElement.appendChild(this.svg);
+        this.svg = new SVGContainer(parentElement, this.height, this.width);
         this.stars = [];
 
         if (attribs) {
             if (this._validateAndSet(attribs)) {
                 this._draw();
             } else {
-                this.parentElement.removeChild(this.svg);
+                //this.svg.removeElement();
                 console.error("Stopping execution");
                 return null;
             }
@@ -237,24 +323,19 @@ class StarRating {
         //check height and width
         width = width.num ? width.num + width.unit : this.width;
         height = height.num ? height.num + height.unit : this.height;
-        this.svg.setAttribute("width", width);
-        this.svg.setAttribute("height", height);
-
-        //get the height width from svg in dom
-        height = this.svg.clientHeight;
-        width = this.svg.clientWidth;
+        [height, width] = this.svg.update(height, width);
 
         if (width < 20) {
             console.error("Minimum width value is 20");
             width = this.width;
-            this.svg.setAttribute("width", width);
         }
 
         if (height < 20) {
             console.error("Minimum width value is 20");
             height = this.height;
-            this.svg.setAttribute("height", height);
         }
+
+        [height, width] = this.svg.update(height, width);
 
         //check if number of stars => N is ok otherwise set the default value 5
         if (!+N) {
@@ -433,8 +514,7 @@ class StarRating {
             this.direction = direction;
             this.flow = flow;
         } else {
-            this.svg.setAttribute("width", this.width);
-            this.svg.setAttribute("height", this.height);
+            this.svg.update(this.height, this.width);
         }
         return shouldContinue;
     }
@@ -548,18 +628,24 @@ class StarRating {
     */
     _draw() {
         let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
-            rating = !this.rating && this.rating != 0 ? this.TotalStars : this.rating; //to handle 0 check
+            rating = !this.rating && this.rating != 0 ? this.TotalStars : this.rating,
+            currentStars = this.stars.length; //to handle 0 check
         //Adjust no of star
         //Append if extra needed
-        for (i = this.stars.length; i < this.TotalStars; i++) {
-            let elem = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            //Improvement needed
-            this.svg.appendChild(elem);
-            this.stars.push(elem);
-        }
+        // for (i = this.stars.length; i < this.TotalStars; i++) {
+        //     let elem = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        //     //Improvement needed
+        //     this.svg.appendChild(elem);
+        //     this.stars.push(elem);
+        // }
+
+        // //Remove stars which are currently not needed
+        // for (i = this.stars.length - 1; i >= this.TotalStars; i--) {
+        //     this.svg.removeChild(this.stars.pop());
+        // }
 
         //remove def if exist
-        let defs = this.svg.getElementsByTagName("defs");
+        let defs = this.svg.getElement().getElementsByTagName("defs");
         if (defs.length > 0) {
             this.svg.removeChild(defs[0]);
         }
@@ -610,30 +696,52 @@ class StarRating {
             }
         }
 
-        for (i = 0; i < this.stars.length; i++) {
-            this.stars[i].setAttribute('d',
-                _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
-            );
+        for (i = 0; i < Math.max(currentStars, this.TotalStars); i++){
+            j = this.flow == 'reverse' ? this.TotalStars - i - 1 : i;
+            if(i >= currentStars){
+                this.stars.push(new Star(this.side, baseX + (xShift * i), baseY + (yShift * i)));
+                this.svg.appendChild(this.stars[i]);
+            }else if(i >= this.TotalStars){
+                this.starts[i].pop().removeElement();
+            }
+            if(i < this.TotalStars){
+                if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
+                    this.stars[i].setAttributes({
+                        "fill": "url(#partial-fill)",
+                        "stroke": "url(#partial-stroke)",
+                        "stroke-width": this.strokeWidth + "px",
+                        "d": _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
+                    });
+                } else {
+                    this.stars[i].setAttributes({
+                        "fill": j < Math.ceil(rating) ? this.ratedFill : this.nonratedFill,
+                        "stroke": j < Math.ceil(rating) ? this.ratedStroke : this.nonratedStroke,
+                        "stroke-width": this.strokeWidth + "px",
+                        "d": _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
+                    });
+                }
+            }
         }
+
+        // for (i = 0; i < this.stars.length; i++) {
+        //     this.stars[i].setAttribute('d',
+        //         _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
+        //     );
+        // }
 
 
         //setting colors
-        for (i = 0; i < this.stars.length; i++) {
-            j = this.flow == 'reverse' ? this.stars.length - i - 1 : i;
-            if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
-                this.stars[i].setAttribute("fill", "url(#partial-fill)");
-                this.stars[i].setAttribute("stroke", "url(#partial-stroke)");
-            } else {
-                this.stars[i].setAttribute("fill", j < Math.ceil(rating) ? this.ratedFill : this.nonratedFill);
-                this.stars[i].setAttribute("stroke", j < Math.ceil(rating) ? this.ratedStroke : this.nonratedStroke);
-            }
-            this.stars[i].setAttribute("stroke-width", this.strokeWidth + "px");
-        }
-
-        //Remove stars which are currently not needed
-        for (i = this.stars.length - 1; i >= this.TotalStars; i--) {
-            this.svg.removeChild(this.stars.pop());
-        }
+        // for (i = 0; i < this.stars.length; i++) {
+        //     j = this.flow == 'reverse' ? this.stars.length - i - 1 : i;
+        //     if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
+        //         this.stars[i].setAttribute("fill", "url(#partial-fill)");
+        //         this.stars[i].setAttribute("stroke", "url(#partial-stroke)");
+        //     } else {
+        //         this.stars[i].setAttribute("fill", j < Math.ceil(rating) ? this.ratedFill : this.nonratedFill);
+        //         this.stars[i].setAttribute("stroke", j < Math.ceil(rating) ? this.ratedStroke : this.nonratedStroke);
+        //     }
+        //     this.stars[i].setAttribute("stroke-width", this.strokeWidth + "px");
+        // }
     }
 
     /**

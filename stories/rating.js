@@ -900,9 +900,8 @@ ratingStory.addChapter(
     T = 1, startTime = ((new Date()).getTime() * 1), time = 0;
     while(time < 100){
       rating.update({
-        "rating": 4.5 + T,
-        "stars": 5 + T,
-        "width": 400 + T * 100
+        "rating": (4.5 + T) % 5,
+        "stars": 5
       });
       time =  ((new Date()).getTime() * 1) - startTime;
       T++;
