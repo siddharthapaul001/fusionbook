@@ -11,21 +11,32 @@
 */
 function _pluckSize(size, str) {
     str = str ? 'of ' + str : '';
-    let num = (size + '').match(/\d+/g),
-        unit = (size + '').match(/px|%|vh|vw/g) || [''];
-    if (!num || ((size + '').trim().startsWith('-'))) {
+    let num = +(size + '').replace(/px$/g, '');
+    // let num = (size + '').match(/\d+/g),
+    //     unit = (size + '').match(/px|%|vh|vw/g) || [''];
+
+    // if (!num || ((size + '').trim().startsWith('-'))) {
+    //     if (size) {
+    //         console.error("Error in size value " + str);
+    //     }
+    //     return {
+    //         num: null,
+    //         unit: ''
+    //     };
+    // }
+    if (!+num || num < 0) {
         if (size) {
-            console.error("Error in size value " + str);
+            console.error("Error in size value " + str + ": " + size);
         }
         return {
             num: null,
             unit: ''
-        };
+        }
     }
 
     return {
-        num: +num[0],
-        unit: unit[0]
+        num,  // +num[0],
+        unit: 'px' // unit[0]
     };
 }
 
@@ -90,8 +101,8 @@ function _isFraction(num) {
 *           path holds the path string for star
 *          
 */
-function _getPathString(side, X, Y) {
-    let str = "M" + X + "," + Y,
+function _getPathString(side) {
+    let str,
         ax = 0.15,
         bx = (1 - 2 * ax) / 2,
         cx = 0.3,
@@ -103,47 +114,38 @@ function _getPathString(side, X, Y) {
         am = ax / ay;
     cx = (am * cy);
     ex = ex * am;
-    str += " l" + (ax * side) + "," + (ay * side);
-    str += " h" + (bx * side);
-    str += " l-" + (cx * side) + "," + (by * side);
-    str += " l" + (cx * side) + "," + (cy * side);
-    str += " l-" + (dx * side) + ",-" + (dy * side);
-    str += " l-" + (dx * side) + "," + (dy * side);
-    str += " l" + (cx * side) + ",-" + (cy * side);
-    str += " l-" + (cx * side) + ",-" + (by * side);
-    str += " h" + (bx * side);
-    str += " z";
+    str = " l" + (ax * side) + "," + (ay * side)
+        + " h" + (bx * side)
+        + " l-" + (cx * side) + "," + (by * side)
+        + " l" + (cx * side) + "," + (cy * side)
+        + " l-" + (dx * side) + ",-" + (dy * side)
+        + " l-" + (dx * side) + "," + (dy * side)
+        + " l" + (cx * side) + ",-" + (cy * side)
+        + " l-" + (cx * side) + ",-" + (by * side)
+        + " h" + (bx * side)
+        + " z";
     return str;
 }
 
 class SVGElement {
     constructor(tag) {
-        this.elem = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        this._elem = document.createElementNS("http://www.w3.org/2000/svg", tag);
         this.attrs = {};
     }
 
-    getSize() {
-	let rect = this.elem.getBoundingClientRect();
-        return [rect.height, rect.width]
+    getNode() {
+        return this._elem;
     }
 
-    getElement() {
-        return this.elem;
-    }
-
-    removeElement() {
-        this.elem.parentNode.removeChild(this.elem);
-    }
-
-    getAttributes() {
-        return this.attrs;
+    removeNode() {
+        this._elem.parentNode.removeChild(this._elem);
     }
 
     appendChild(child) {
         if (child instanceof Node) {
-            this.elem.appendChild(child);
+            this._elem.appendChild(child);
         } else if (child instanceof SVGElement) {
-            this.elem.appendChild(child.getElement());
+            this._elem.appendChild(child.getNode());
         } else {
             console.error("Child must be Node or SVGElement");
         }
@@ -151,9 +153,9 @@ class SVGElement {
 
     removeChild(child) {
         if (child instanceof Node) {
-            this.elem.removeChild(child);
+            this._elem.removeChild(child);
         } else if (child instanceof SVGElement) {
-            this.elem.removeChild(child.getElement());
+            this._elem.removeChild(child.getNode());
         } else {
             console.error("Child must be Node or SVGElement");
         }
@@ -163,7 +165,7 @@ class SVGElement {
         let hasChange = false;
         for (let attrName in attrs) {
             if (this.attrs[attrName] !== attrs[attrName]) {
-                this.elem.setAttribute(attrName, attrs[attrName]);
+                this._elem.setAttribute(attrName, attrs[attrName]);
                 this.attrs[attrName] = attrs[attrName];
                 hasChange = true;
             }
@@ -172,78 +174,119 @@ class SVGElement {
     }
 }
 
-class Definition extends SVGElement {
-    constructor() {
-        super("defs");
+
+
+
+/**
+* 
+* Generates linear gradient in svg definitions 
+* This class is used for partial color filling for fractional rating 
+* 
+* @memberof StarRating
+*          
+*/
+class Definition {
+    constructor(svg) {
+        this.defs = new SVGElement("defs");
         this.linearGradient = new SVGElement("linearGradient"),
-        this.strokeLinearGradient = new SVGElement("linearGradient"),
-        this.RatedStart = new SVGElement("stop"),
-        this.RatedEnd = new SVGElement("stop"),
-        this.NonRatedStart = new SVGElement("stop"),
-        this.NonRatedEnd = new SVGElement("stop"),
-        this.strokeRatedStart = new SVGElement("stop"),
-        this.strokeRatedEnd = new SVGElement("stop"),
-        this.strokeNonRatedStart = new SVGElement("stop"),
-        this.strokeNonRatedEnd = new SVGElement("stop");
+            this.strokeLinearGradient = new SVGElement("linearGradient"),
+            this.Rated = new SVGElement("stop"),
+            this.NonRated = new SVGElement("stop"),
+            this.strokeRated = new SVGElement("stop"),
+            this.strokeNonRated = new SVGElement("stop");
 
-        this.linearGradient.appendChild(this.RatedStart);
-        this.linearGradient.appendChild(this.RatedEnd);
-        this.linearGradient.appendChild(this.NonRatedStart);
-        this.linearGradient.appendChild(this.NonRatedEnd);
+        this.linearGradient.appendChild(this.Rated);
+        this.linearGradient.appendChild(this.NonRated);
 
-        this.strokeLinearGradient.appendChild(this.strokeRatedStart);
-        this.strokeLinearGradient.appendChild(this.strokeRatedEnd);
-        this.strokeLinearGradient.appendChild(this.strokeNonRatedStart);
-        this.strokeLinearGradient.appendChild(this.strokeNonRatedEnd);
+        this.strokeLinearGradient.appendChild(this.strokeRated);
+        this.strokeLinearGradient.appendChild(this.strokeNonRated);
 
-        this.appendChild(this.linearGradient);
-        this.appendChild(this.strokeLinearGradient);
+        this.defs.appendChild(this.linearGradient);
+        this.defs.appendChild(this.strokeLinearGradient);
+        svg.appendChild(this.defs);
+        svg.addDefinition(this);
+    }
+
+    update(rating, ratedFill, nonratedFill, ratedStroke, nonratedStroke, direction, flow) {
+        let ratingFraction = (rating - Math.floor(rating)).toFixed(2),
+            commonLinearGradient = {
+                "x1": "0%",
+                "x2": direction == 'row' ? "100%" : "0%",
+                "y1": "0%",
+                "y2": direction == 'column' ? "100%" : "0%"
+            };
+
+
+        this.linearGradient.setAttributes({
+            "id": "partial-fill",
+            ...commonLinearGradient
+        });
+
+        this.strokeLinearGradient.setAttributes({
+            "id": "partial-stroke",
+            ...commonLinearGradient
+        });
+
+        if (flow == 'reverse') {
+            [ratedFill, nonratedFill] = [nonratedFill, ratedFill];
+            [ratedStroke, nonratedStroke] = [nonratedStroke, ratedStroke];
+        }
+
+        this.Rated.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + ratedFill + ";stop-opacity:1;"
+        });
+
+        this.NonRated.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + nonratedFill + ";stop-opacity:1;"
+        });
+
+        this.strokeRated.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + ratedStroke + ";stop-opacity:1;"
+        });
+
+        this.strokeNonRated.setAttributes({
+            "offset": (ratingFraction * 100) + "%",
+            "style": "stop-color:" + nonratedStroke + ";stop-opacity:1;"
+        });
     }
 }
 
 class SVGContainer extends SVGElement {
     constructor(parentElement, height, width) {
         super("svg");
-	this.elem.setAttribute("xmlns", "https://www.w3.org/2000/svg");
-        parentElement.appendChild(this.elem);
+        this.getNode().setAttribute("xmlns", "https://www.w3.org/2000/svg");
+        parentElement.appendChild(this.getNode());
         this.setAttributes({ height, width });
         [height, width] = this.getSize();
         this.height = height;
         this.width = width;
     }
 
+    getSize() {
+        let rect = this.getNode().getBoundingClientRect();
+        return [rect.height, rect.width]
+    }
+
     getDefinition() {
-        return this.def;
+        return this._def;
     }
 
     addDefinition(def) {
         if (def instanceof Definition) {
-            this.appendChild(def);
-            this.def = def;
+            this._def = def;
         }
     }
 
     update(height, width) {
         if (this.setAttributes({ height, width })) {
-            [height, width] = this.getSize();
+            //[height, width] = this.getSize();
             this.height = height;
             this.width = width;
         }
         return [this.height, this.width]
-    }
-}
-
-class Star extends SVGElement {
-    constructor(side, X, Y) {
-        super("path");
-        this.setAttributes({ d: _getPathString(side, X, Y) });
-        this.side = side;
-        this.X = X;
-        this.Y = Y;
-    }
-
-    update(side, X, Y) {
-        return this.setAttributes({ d: _getPathString(side, X, Y) });
     }
 }
 
@@ -270,22 +313,26 @@ class StarRating {
             console.error("A HTML Element must be provided in the first argument");
             return null;
         }
-        this.parentElement = parentElement;
+
+        this.elements = {};
+        this.config = {};
+        this._internalConfig = {};
+        this.elements.parentElement = parentElement;
 
         //setting defaults
-        this.height = 400;
-        this.width = 400;
-        this.TotalStars = 5; //N denotes number of stars
-        this.rating = undefined;
-        this.orientation = 'left-to-right';
-        this.padding = 1;
-        this.justifyContent = 'center';
-        this.alignItems = 'center';
-        this.strokeWidth = 0;
-        this.ratedFill = "#ff0";
-        this.nonratedFill = "#ddd";
-        this.ratedStroke = "none";
-        this.nonratedStroke = "none";
+        this.config.height = 400;
+        this.config.width = 400;
+        this.config.TotalStars = 5; //N denotes number of stars
+        this.config.rating = undefined;
+        this.config.orientation = 'left-to-right';
+        this.config.padding = 1;
+        this.config.justifyContent = 'center';
+        this.config.alignItems = 'center';
+        this.config.strokeWidth = 0;
+        this.config.ratedFill = "#ff0";
+        this.config.nonratedFill = "#ddd";
+        this.config.ratedStroke = "none";
+        this.config.nonratedStroke = "none";
         /*
         The styleset object structure to handle
         {
@@ -301,22 +348,25 @@ class StarRating {
         */
 
         //usefull internally
-        this.direction = 'row';
-        this.flow = '';
-        this.svg = new SVGContainer(parentElement, this.height, this.width);
-        this.stars = [];
+        this._internalConfig.direction = 'row';
+        this._internalConfig.flow = '';
+        this.elements.svg = new SVGContainer(parentElement, this.config.height, this.config.width);
+        this.elements.stars = [];
 
         if (attribs) {
             if (this._validateAndSet(attribs)) {
-                this._draw();
+                this._internalConfig.requestedAnimationFrame = true;
+                window.requestAnimationFrame(() => {
+                    this._draw();
+                });
             } else {
-                this.svg.removeElement();
+                this.elements.svg.removeNode();
                 console.error("Stopping execution");
                 return null;
             }
         } else {
-            this.sideOut = Math.min(this.direction == 'row' ? this.width / this.TotalStars : this.width, this.direction == 'column' ? this.height / this.TotalStars : this.height);
-            this.side = this.sideOut - this.padding * 2 - this.strokeWidth * 2;
+            this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this.config.width / this.config.TotalStars : this.config.width, this._internalConfig.direction == 'column' ? this.config.height / this.config.TotalStars : this.config.height);
+            this._internalConfig.side = this._internalConfig.sideOut - this.config.padding * 2 - this.config.strokeWidth * 2;
             this._draw();
         }
     }
@@ -362,25 +412,25 @@ class StarRating {
             flow;
 
         //check height and width
-        width = width.num ? width.num + width.unit : this.width;
-        height = height.num ? height.num + height.unit : this.height;
-        [height, width] = this.svg.update(height, width);
+        width = width.num ? width.num : this.config.width;
+        height = height.num ? height.num : this.config.height;
+        //[height, width] = this.elements.svg.update(height, width);
 
         if (width < 20) {
             console.error("Minimum width value is 20");
-            width = this.width;
+            width = this.config.width;
         }
 
         if (height < 20) {
             console.error("Minimum width value is 20");
-            height = this.height;
+            height = this.config.height;
         }
 
-        [height, width] = this.svg.update(height, width);
+        //[height, width] = this.elements.svg.update(height, width);
 
         //check if number of stars => N is ok otherwise set the default value 5
         if (!+N) {
-            N = this.TotalStars;
+            N = this.config.TotalStars;
         }
         if (N <= 0) {
             console.error("No of stars must be greater than 0");
@@ -390,7 +440,7 @@ class StarRating {
 
         //check if rating is given as number otherwise set the default value 5
         if (!+rating && rating != 0) {
-            rating = this.rating;
+            rating = this.config.rating;
         }
 
         if (rating && (rating > N || rating < 0)) {
@@ -403,7 +453,7 @@ class StarRating {
             if (justifyContent) {
                 console.error("Incorrect value for justify-content");
             }
-            justifyContent = this.justifyContent;
+            justifyContent = this.config.justifyContent;
         }
 
         //Align items
@@ -411,7 +461,7 @@ class StarRating {
             if (alignItems) {
                 console.error("Incorrect value for align-items");
             }
-            alignItems = this.alignItems;
+            alignItems = this.config.alignItems;
         }
 
         //orientation
@@ -419,7 +469,7 @@ class StarRating {
             if (orientation) {
                 console.error("Incorrect value for orientation");
             }
-            orientation = this.orientation;
+            orientation = this.config.orientation;
         }
 
         //internal variables to ease of control
@@ -427,36 +477,30 @@ class StarRating {
         flow = (orientation == 'right-to-left' || orientation == 'bottom-to-top') ? 'reverse' : '';
 
         //assign padding
-        if (padding.unit == 'px' || padding.unit == '') {
-            if (!padding.num) {
-                if (attribs['padding']) {
-                    console.error("Incorrect padding value");
-                }
-                padding = this.padding;
-            } else {
-                padding = padding.num;
+        if (!padding.num) {
+            if (attribs['padding']) {
+                console.error("Incorrect padding value");
             }
+            padding = this.config.padding;
         } else {
-            console.error("Paddding value allowed only as number or pixels");
+            padding = padding.num;
         }
+
         if (padding < 1) {
             console.error("Incorrect padding.");
-            padding = this.padding;
+            padding = this.config.padding;
         }
 
         //assign stroke-width
-        if (strokeWidth.unit == 'px' || strokeWidth.unit == '') {
-            if (!strokeWidth.num) {
-                if (attribs['stroke-width']) {
-                    console.error("Incorrect stroke width value");
-                }
-                strokeWidth = this.strokeWidth;
-            } else {
-                strokeWidth = strokeWidth.num;
+        if (!strokeWidth.num) {
+            if (attribs['stroke-width']) {
+                console.error("Incorrect stroke width value");
             }
+            strokeWidth = this.config.strokeWidth;
         } else {
-            console.error("Stroke width value allowed only as number or pixels");
+            strokeWidth = strokeWidth.num;
         }
+
 
         //validatind and adding styles
         if (!styles['rated']) {
@@ -466,22 +510,22 @@ class StarRating {
             styles['nonrated'] = {};
         }
 
-        styles['rated']['fill'] = _validateColorCode(styles['rated']['fill']) ? styles['rated']['fill'] : this.ratedFill;
-        styles['rated']['stroke'] = _validateColorCode(styles['rated']['stroke']) ? styles['rated']['stroke'] : this.ratedStroke;
+        styles['rated']['fill'] = _validateColorCode(styles['rated']['fill']) ? styles['rated']['fill'] : this.config.ratedFill;
+        styles['rated']['stroke'] = _validateColorCode(styles['rated']['stroke']) ? styles['rated']['stroke'] : this.config.ratedStroke;
 
-        styles['nonrated']['fill'] = _validateColorCode(styles['nonrated']['fill']) ? styles['nonrated']['fill'] : this.nonratedFill;
-        styles['nonrated']['stroke'] = _validateColorCode(styles['nonrated']['stroke']) ? styles['nonrated']['stroke'] : this.nonratedStroke;
+        styles['nonrated']['fill'] = _validateColorCode(styles['nonrated']['fill']) ? styles['nonrated']['fill'] : this.config.nonratedFill;
+        styles['nonrated']['stroke'] = _validateColorCode(styles['nonrated']['stroke']) ? styles['nonrated']['stroke'] : this.config.nonratedStroke;
 
         //Do calculation to check managable conditions
         if (shouldContinue) {
             sideOut = Math.min(direction == 'row' ? width / N : width, direction == 'column' ? height / N : height);
             if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
                 console.error("Incorrect stroke-width");
-                strokeWidth = this.strokeWidth;
+                strokeWidth = this.config.strokeWidth;
             }
             if (padding < 1 || padding > 0.10 * sideOut) {
                 console.error("Incorrect padding");
-                padding = this.padding;
+                padding = this.config.padding;
             }
             side = sideOut - (padding * 2) - (strokeWidth * 2);
             //console.log(sideOut, side, padding, strokeWidth);
@@ -492,11 +536,11 @@ class StarRating {
             if (side < 10) {
                 if (padding > 2) {
                     console.error("Decrease padding.");
-                    padding = this.padding;
+                    padding = this.config.padding;
                     side = sideOut - padding * 2 - strokeWidth * 2;
                 } else if (strokeWidth > (0.10 * sideOut)) {
                     console.error("Decrease stroke-width.");
-                    strokeWidth = this.strokeWidth;
+                    strokeWidth = this.config.strokeWidth;
                     side = sideOut - (padding * 2) - (strokeWidth * 2);
                 }
             }
@@ -523,129 +567,43 @@ class StarRating {
 
         //check if it is non-managable condition
         if (shouldContinue) {
-            this.height = height;
-            this.width = width;
-            this.orientation = orientation;
-            this.padding = padding;
-            this.rating = rating;
-            this.TotalStars = N;
-            this.ratedFill = styles['rated']['fill'];
-            this.ratedStroke = styles['rated']['stroke'];
-            this.nonratedFill = styles['nonrated']['fill'];
-            this.nonratedStroke = styles['nonrated']['stroke'];
-            this.side = side;
-            this.sideOut = sideOut;
-            this.strokeWidth = strokeWidth;
+            this.config.height = height;
+            this.config.width = width;
+            this.config.orientation = orientation;
+            this.config.padding = padding;
+            this.config.rating = rating;
+            this.config.TotalStars = N;
+            this.config.ratedFill = styles['rated']['fill'];
+            this.config.ratedStroke = styles['rated']['stroke'];
+            this.config.nonratedFill = styles['nonrated']['fill'];
+            this.config.nonratedStroke = styles['nonrated']['stroke'];
+            this.config.strokeWidth = strokeWidth;
 
             //Show a warning if stroke width is given but stroke-color is None as stroke is none show not visible
-            if (this.strokeWidth > 0) {
-                if (this.ratedStroke == 'none') {
+            if (this.config.strokeWidth > 0) {
+                if (this.config.ratedStroke == 'none') {
                     console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting rated stroke color as black");
-                    this.ratedStroke = '#000';
+                    this.config.ratedStroke = '#000';
                 }
-                if (this.nonratedStroke == 'none') {
+                if (this.config.nonratedStroke == 'none') {
                     console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting nonrated stroke color as black");
-                    this.nonratedStroke = '#000';
+                    this.config.nonratedStroke = '#000';
                 }
             }
 
-            this.justifyContent = justifyContent;
-            this.alignItems = alignItems;
-            //extract direction and flow from orientation
-            this.direction = direction;
-            this.flow = flow;
-        } else {
-            this.svg.update(this.height, this.width);
-        }
+            this.config.justifyContent = justifyContent;
+            this.config.alignItems = alignItems;
+            this._internalConfig.side = side;
+            this._internalConfig.sideOut = sideOut;
+            //extracted direction and flow from orientation
+            this._internalConfig.direction = direction;
+            this._internalConfig.flow = flow;
+        } 
+        // else {
+        //     this.elements.svg.update(this.config.height, this.config.width);
+        // }
         return shouldContinue;
     }
-
-
-    /**
-    * 
-    * Generates linear gradient in svg definitions 
-    * This function is used for partial color filling for fractional rating 
-    * 
-    * @private
-    * 
-    * @memberof StarRating
-    *          
-    */
-    _createGradientDefinitions(defs) {
-        let startFill = this.ratedFill, endFill = this.nonratedFill, startStroke = this.ratedStroke, endStroke = this.nonratedStroke,
-            ratingFraction = this.rating ? (this.rating - Math.floor(this.rating)).toFixed(2) : 0
-            ;
-
-        if(!defs){
-            defs = new Definition();
-        }
-
-        defs.linearGradient.setAttributes({
-            "id": "partial-fill",
-            "x1": "0%",
-            "x2": this.direction == 'row' ? "100%" : "0%",
-            "y1": "0%",
-            "y2": this.direction == 'column' ? "100%" : "0%"
-        });
-
-        defs.strokeLinearGradient.setAttributes({
-            "id": "partial-stroke",
-            "x1": "0%",
-            "x2": this.direction == 'row' ? "100%" : 0,
-            "y1": "0%",
-            "y2": this.direction == 'column' ? "100%" : 0
-        });
-
-        if (this.flow == 'reverse') {
-            startFill = this.nonratedFill;
-            endFill = this.ratedFill;
-            startStroke = this.nonratedStroke;
-            endStroke = this.ratedStroke;
-        }
-
-        defs.RatedStart.setAttributes({
-            "offset": "0%",
-            "style": "stop-color:" + startFill + ";stop-opacity:1;"
-        });
-        defs.RatedEnd.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + startFill + ";stop-opacity:1;"
-        });
-
-        defs.NonRatedStart.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + endFill + ";stop-opacity:1;"
-        });
-
-        defs.NonRatedEnd.setAttributes({
-            "offset": "100%",
-            "style": "stop-color:" + endFill + ";stop-opacity:1;"
-        });
-
-        defs.strokeRatedStart.setAttributes({
-            "offset": "0%",
-            "style": "stop-color:" + startStroke + ";stop-opacity:1;"
-        });
-
-        defs.strokeRatedEnd.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + startStroke + ";stop-opacity:1;"
-        });
-
-        defs.strokeNonRatedStart.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + endStroke + ";stop-opacity:1;"
-        });
-
-        defs.strokeNonRatedEnd.setAttributes({
-            "offset": "100%",
-            "style": "stop-color:" + endStroke + ";stop-opacity:1;"
-        });
-
-        this.svg.addDefinition(defs);
-    }
-
-
 
     /**
     * 
@@ -657,88 +615,97 @@ class StarRating {
     *          
     */
     _draw() {
+        this._internalConfig.requestedAnimationFrame = false;
         let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
-            rating = !this.rating && this.rating != 0 ? this.TotalStars : this.rating,
-            currentStars = this.stars.length; //to handle 0 check
+            rating = !this.config.rating && this.config.rating != 0 ? this.config.TotalStars : this.config.rating,
+            currentStars = this.elements.stars.length,
+            relativePath = _getPathString(this._internalConfig.side);
 
+        //update svg height and width
+        this.elements.svg.update(this.config.height, this.config.width);
         //remove def if exist
-        let defs = this.svg.getDefinition();
-        
+        let defs = this.elements.svg.getDefinition();
+
         if (_isFraction(rating)) {
-            this._createGradientDefinitions(defs);
-        }else if(defs){
-            defs.removeElement();
-            delete this.svg.defs;
+            //this._createGradientDefinitions(defs);
+            if (!defs) {
+                defs = new Definition(this.elements.svg);
+            }
+            defs.update(rating, this.config.ratedFill, this.config.nonratedFill, this.config.ratedStroke, this.config.nonratedStroke, this._internalConfig.direction, this._internalConfig.flow);
         }
 
-        if (this.direction == 'row') {
-            xShift = this.sideOut;
-            if (this.justifyContent == 'start') {
-                baseX = (this.sideOut / 2);
-            } else if (this.justifyContent == 'center') {
-                baseX = (this.sideOut / 2) + ((this.width - (this.sideOut * this.TotalStars)) / 2);
-            } else if (this.justifyContent == 'end') {
-                baseX = (this.width - (this.sideOut * this.TotalStars)) + (this.sideOut / 2);
-            } else if (this.justifyContent == 'space-evenly') {
-                xShift = this.width / this.TotalStars;
+        if (this._internalConfig.direction == 'row') {
+            xShift = this._internalConfig.sideOut;
+            if (this.config.justifyContent == 'start') {
+                baseX = (this._internalConfig.sideOut / 2);
+            } else if (this.config.justifyContent == 'center') {
+                baseX = (this._internalConfig.sideOut / 2) + ((this.config.width - (this._internalConfig.sideOut * this.config.TotalStars)) / 2);
+            } else if (this.config.justifyContent == 'end') {
+                baseX = (this.config.width - (this._internalConfig.sideOut * this.config.TotalStars)) + (this._internalConfig.sideOut / 2);
+            } else if (this.config.justifyContent == 'space-evenly') {
+                xShift = this.config.width / this.config.TotalStars;
                 baseX = xShift / 2;
                 //console.log('space-evenly');
             }
-            if (this.alignItems == 'center') {
-                baseY = ((this.sideOut - this.side) / 2) + ((this.height - this.sideOut) / 2);
-            } else if (this.alignItems == 'start') {
-                baseY = ((this.sideOut - this.side) / 2);
-            } else if (this.alignItems == 'end') {
-                baseY = (this.height - this.sideOut);
+            if (this.config.alignItems == 'center') {
+                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2) + ((this.config.height - this._internalConfig.sideOut) / 2);
+            } else if (this.config.alignItems == 'start') {
+                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
+            } else if (this.config.alignItems == 'end') {
+                baseY = (this.config.height - this._internalConfig.sideOut);
             }
-        } else if (this.direction == 'column') {
-            yShift = this.sideOut;
-            if (this.justifyContent == 'start') {
-                baseY = (this.sideOut - this.side) / 2;
-            } else if (this.justifyContent == 'center') {
-                baseY = ((this.sideOut - this.side) / 2);
-            } else if (this.justifyContent == 'end') {
-                baseY = (this.height - (this.sideOut * this.TotalStars));
-            } else if (this.justifyContent == 'space-evenly') {
-                yShift = this.height / this.TotalStars;
-                baseY = (yShift - this.side) / 2;
+        } else if (this._internalConfig.direction == 'column') {
+            yShift = this._internalConfig.sideOut;
+            if (this.config.justifyContent == 'start') {
+                baseY = (this._internalConfig.sideOut - this._internalConfig.side) / 2;
+            } else if (this.config.justifyContent == 'center') {
+                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
+            } else if (this.config.justifyContent == 'end') {
+                baseY = (this.config.height - (this._internalConfig.sideOut * this.config.TotalStars));
+            } else if (this.config.justifyContent == 'space-evenly') {
+                yShift = this.config.height / this.config.TotalStars;
+                baseY = (yShift - this._internalConfig.side) / 2;
             }
 
             //console.log(this.alignItems);
-            if (this.alignItems == 'center') {
-                baseX = (this.sideOut / 2) + ((this.width - this.sideOut) / 2);
-            } else if (this.alignItems == 'start') {
-                baseX = this.sideOut / 2;
-            } else if (this.alignItems == 'end') {
-                baseX = this.width - (this.sideOut / 2);
+            if (this.config.alignItems == 'center') {
+                baseX = (this._internalConfig.sideOut / 2) + ((this.config.width - this._internalConfig.sideOut) / 2);
+            } else if (this.config.alignItems == 'start') {
+                baseX = this._internalConfig.sideOut / 2;
+            } else if (this.config.alignItems == 'end') {
+                baseX = this.config.width - (this._internalConfig.sideOut / 2);
             }
         }
 
-        for (i = 0; i < Math.max(currentStars, this.TotalStars); i++) {
-            j = this.flow == 'reverse' ? this.TotalStars - i - 1 : i;
+        for (i = 0; i < Math.max(currentStars, this.config.TotalStars); i++) {
+            j = this._internalConfig.flow == 'reverse' ? this.config.TotalStars - i - 1 : i;
             if (i >= currentStars) {
-                this.stars.push(new Star(this.side, baseX + (xShift * i), baseY + (yShift * i)));
-                this.svg.appendChild(this.stars[i]);
-            } else if (i >= this.TotalStars) {
-                this.stars.pop().removeElement();
+                let star = new SVGElement("path");
+                this.elements.stars.push(star);
+                this.elements.svg.appendChild(star);
+            } else if (i >= this.config.TotalStars) {
+                this.elements.stars.pop().removeNode();
             }
-            if (i < this.TotalStars) {
+            if (i < this.config.TotalStars) {
                 if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
-                    this.stars[i].setAttributes({
+                    this.elements.stars[i].setAttributes({
                         "fill": "url(#partial-fill)",
                         "stroke": "url(#partial-stroke)",
-                        "stroke-width": this.strokeWidth + "px",
-                        "d": _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
+                        "stroke-width": this.config.strokeWidth + "px",
+                        "d": 'M' + (baseX + (xShift * i)) + ',' + (baseY + (yShift * i)) + ' ' + relativePath
                     });
                 } else {
-                    this.stars[i].setAttributes({
-                        "fill": j < Math.ceil(rating) ? this.ratedFill : this.nonratedFill,
-                        "stroke": j < Math.ceil(rating) ? this.ratedStroke : this.nonratedStroke,
-                        "stroke-width": this.strokeWidth + "px",
-                        "d": _getPathString(this.side, baseX + (xShift * i), baseY + (yShift * i))
+                    this.elements.stars[i].setAttributes({
+                        "fill": j < Math.ceil(rating) ? this.config.ratedFill : this.config.nonratedFill,
+                        "stroke": j < Math.ceil(rating) ? this.config.ratedStroke : this.config.nonratedStroke,
+                        "stroke-width": this.config.strokeWidth + "px",
+                        "d": 'M' + (baseX + (xShift * i)) + ',' + (baseY + (yShift * i)) + ' ' + relativePath
                     });
                 }
             }
+        }
+        if(typeof this.onDraw === 'function'){
+            this.onDraw();
         }
     }
 
@@ -756,11 +723,19 @@ class StarRating {
     update(attribs) {
         if (attribs) {
             if (this._validateAndSet(attribs)) {
-                this._draw();
+                if(!this._internalConfig.requestedAnimationFrame){
+                    window.requestAnimationFrame(() => {
+                        this._draw();
+                    });
+                    this._internalConfig.requestedAnimationFrame = true;
+                }
             } else {
                 console.error("Stopping execution");
                 return null;
             }
+        }
+        if(typeof this.onUpdate === 'function'){
+            this.onUpdate(this.config);
         }
     }
 }

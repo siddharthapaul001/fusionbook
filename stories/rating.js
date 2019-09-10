@@ -26,11 +26,11 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'StarRating with specified height and width values as number and update height only',
   story => {
-    let rating = new StarRating(story,{
+    let rating = new StarRating(story, {
       "height": 400,
       "width": 400
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "height": 600
       });
@@ -44,7 +44,7 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'StarRating with specified height and width values less than 20',
   story => {
-    let rating = new StarRating(story,{
+    let rating = new StarRating(story, {
       "height": 5,
       "width": 5
     });
@@ -57,7 +57,7 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'Minimum value of width and height',
   story => {
-    let rating = new StarRating(story,{
+    let rating = new StarRating(story, {
       "height": 20,
       "width": 20,
       "stars": 1
@@ -72,12 +72,12 @@ ratingStory.addChapter(
   'StarRating with specified height and width values in % and update both',
   story => {
     let rating = new StarRating(story, {
-        "height": "400%", 
-        "width": "400%"
-      });
-    setTimeout(function(){
+      "height": "400%",
+      "width": "400%"
+    });
+    setTimeout(function () {
       rating.update({
-        "width": 800, 
+        "width": 800,
         "height": 600
       });
     }, 3000);
@@ -91,10 +91,10 @@ ratingStory.addChapter(
   'StarRating with specified height and width values in px then update width with garbage',
   story => {
     let rating = new StarRating(story, {
-      "width": "400px", 
-      "height":"400px"
+      "width": "400px",
+      "height": "400px"
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "width": "garbage",
         "height": undefined
@@ -110,13 +110,13 @@ ratingStory.addChapter(
   'Rating using default number of stars and updating rating',
   story => {
     let rating = new StarRating(story, {
-      "width": "1200", 
-      "height": 600, 
+      "width": "1200",
+      "height": 600,
       "rating": 2.69
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
-        "rating":4.5, 
+        "rating": 4.5,
         "stars": 10
       });
     }, 3000);
@@ -132,9 +132,9 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "rating": 2.69
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
-        "rating":4.5
+        "rating": 4.5
       });
     }, 3000);
   },
@@ -147,16 +147,16 @@ ratingStory.addChapter(
   'Variable number of stars and negative or garbage value in rating on update',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
-      "rating": 7.6, 
+      "width": 1200,
+      "height": 600,
+      "rating": 7.6,
       "stars": 8
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "stars": 20
       });
-      setTimeout(function(){
+      setTimeout(function () {
         rating.update({
           "rating": -1,
           "stars": 20
@@ -173,9 +173,9 @@ ratingStory.addChapter(
   'rating is greater than number of stars',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
-      "rating": 12, 
+      "width": 1200,
+      "height": 600,
+      "rating": 12,
       "stars": 10
     });
   },
@@ -188,9 +188,9 @@ ratingStory.addChapter(
   'number of stars in negative',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
-      "rating": 0, 
+      "width": 1200,
+      "height": 600,
+      "rating": 0,
       "stars": -10
     });
   },
@@ -204,12 +204,12 @@ ratingStory.addChapter(
   'vital rating update 10/10 then 15/15 always full fill when rating not provided',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
+      "width": 1200,
+      "height": 600,
       "stars": 10
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "stars": 15
       });
@@ -226,13 +226,13 @@ ratingStory.addChapter(
   'vital rating update 10/10 then 10/15',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
+      "width": 1200,
+      "height": 600,
       "rating": "10",
       "stars": 10
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "stars": 15
       });
@@ -248,13 +248,13 @@ ratingStory.addChapter(
   'vital rating update 9.6/10 then error',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
+      "width": 1200,
+      "height": 600,
       "stars": 10,
       "rating": 9.6
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "stars": 5
       });
@@ -270,12 +270,12 @@ ratingStory.addChapter(
   'vital rating update 10/10 to 5/5. It should not give error',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
+      "width": 1200,
+      "height": 600,
       "stars": 10
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "stars": 5
       });
@@ -291,11 +291,11 @@ ratingStory.addChapter(
   'On update prevention check other attributes changes',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
+      "width": 1200,
+      "height": 600,
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "width": 1400,
         "height": 600,
@@ -314,7 +314,7 @@ ratingStory.addChapter(
   'Check stroke-width attribute without style attributes',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
+      "width": 1200,
       "height": 600,
       "stroke-width": '5',
       'rating': 8.8,
@@ -330,13 +330,13 @@ ratingStory.addChapter(
   'Check stroke-with attribute with style attributes',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
+      "width": 1200,
       "height": 600,
       "stroke-width": '5',
-      "rated":{
+      "rated": {
         "stroke": "#000"
       },
-      "nonrated":{
+      "nonrated": {
         "stroke": "#ff0"
       }
     });
@@ -350,13 +350,13 @@ ratingStory.addChapter(
   'Check large stroke-with',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
+      "width": 1200,
       "height": 600,
       "stroke-width": '100',
-      "rated":{
+      "rated": {
         "stroke": "#000"
       },
-      "nonrated":{
+      "nonrated": {
         "stroke": "#ff0"
       }
     });
@@ -370,14 +370,14 @@ ratingStory.addChapter(
   'Check stroke-width in negative',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
+      "width": 1200,
       "height": 600,
       "stroke-width": -5,
-      "rated":{
+      "rated": {
         "fill": "#ff0",
         "stroke": "#000"
       },
-      "nonrated":{
+      "nonrated": {
         "fill": "#fff",
         "stroke": "#ff0"
       }
@@ -393,33 +393,33 @@ ratingStory.addChapter(
   'On update prevention check other attributes changes',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
-      "rated":{
+      "width": 1200,
+      "height": 600,
+      "rated": {
         "fill": "#f00",
         "stroke": "#000"
       },
-      "nonrated":{
+      "nonrated": {
         "fill": "#ddd",
         "stroke": "#ff0"
       }
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "rating": 10.2,
         "stars": 5,
-        "rated":{
+        "rated": {
           "fill": "#000",
           "stroke": "#f00"
         },
-        "nonrated":{
+        "nonrated": {
           "fill": "#ddd",
           "stroke": "#ff0"
         }
       });
 
-      setTimeout(function(){
+      setTimeout(function () {
         rating.update({
           "rating": 3,
           "stars": 5
@@ -435,8 +435,8 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'Checking zero rating',
   story => {
-    let rating = new StarRating(story, { 
-      "rating": 0 
+    let rating = new StarRating(story, {
+      "rating": 0
     });
   },
   [
@@ -447,8 +447,8 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'number of stars is garbage',
   story => {
-    let rating = new StarRating(story,{
-      "stars":"garbage"
+    let rating = new StarRating(story, {
+      "stars": "garbage"
     });
   },
   [
@@ -459,7 +459,7 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'Only number of stars is given',
   story => {
-    let rating = new StarRating(story,{
+    let rating = new StarRating(story, {
       "stars": 10
     });
   },
@@ -472,13 +472,13 @@ ratingStory.addChapter(
   'StarRating orientation initially left-to-right then updating to right-to-left',
   story => {
     let rating = new StarRating(story, {
-      "width": 1200, 
-      "height": 600, 
-      "rating": 4.5, 
+      "width": 1200,
+      "height": 600,
+      "rating": 4.5,
       "stars": 5,
       "orientation": "left-to-right"
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "orientation": "right-to-left"
       });
@@ -492,7 +492,7 @@ ratingStory.addChapter(
 ratingStory.addChapter(
   'StarRating orientation bottom-to-top',
   story => {
-    let rating = new StarRating(story,{
+    let rating = new StarRating(story, {
       "rating": 4.5,
       "orientation": "bottom-to-top"
     });
@@ -539,13 +539,13 @@ ratingStory.addChapter(
       "align-items": "end"
     });
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "orientation": "right-to-left",
         "align-items": "end"
       });
 
-      setTimeout(function(){
+      setTimeout(function () {
         rating.update({
           "orientation": "right-to-left",
           "align-items": "start"
@@ -615,7 +615,7 @@ ratingStory.addChapter(
         "fill": "rgb(xyz,0,0)"
       }
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "rated": {
           "fill": "blue"
@@ -877,12 +877,12 @@ ratingStory.addChapter(
         "stroke": "#aaa"
       }
     });
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "height": 400,
         "width": 100
       });
-    }, 3000);    
+    }, 3000);
   },
   [
     notes('Should visualize two cases but for update it should remove stroke / padding')
@@ -897,19 +897,97 @@ ratingStory.addChapter(
       "rating": 4.5,
       "stars": 5
     }),
-    T = 1, startTime = ((new Date()).getTime() * 1), time = 0;
-    while(time < 100){
+      T = 1, startTime = ((new Date()).getTime() * 1), time = 0;
+    while (time < 100) {
       rating.update({
         "rating": (4.5 + T) % 5,
         "stars": 5
       });
-      time =  ((new Date()).getTime() * 1) - startTime;
+      time = ((new Date()).getTime() * 1) - startTime;
       T++;
     }
     console.log(T + ' tests in ' + time + 'ms');
   },
   [
     notes('Should visualize rating update and log no of tests done in 100ms')
+  ]
+)
+
+//STRESS TESTING
+ratingStory.addChapter(
+  'Stress Testing on layout update',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "stars": 5
+    }),
+      T = 1, startTime = ((new Date()).getTime() * 1), time = 0;
+    while (time < 100) {
+      rating.update({
+        "width": 400 + T * 100,
+        "rating": 4.5 + T,
+        "stars": 5 + T,
+      });
+      time = ((new Date()).getTime() * 1) - startTime;
+      T++;
+    }
+    console.log(T + ' tests in ' + time + 'ms');
+  },
+  [
+    notes('Should visualize rating update and log no of tests done in 100ms')
+  ]
+)
+
+//TESTS FOR ASYNC
+ratingStory.addChapter(
+  'callback testing',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "stars": 5
+    });
+    
+
+    rating.onUpdate = function(currentConfig){
+      console.log(currentConfig);
+    }
+
+    rating.onDraw = function(){
+      console.log('Drawing :)');
+    }
+
+    setTimeout(function(){
+      rating.update({
+        "rating": 4.78,
+        "stars": 5
+      });
+    }, 3000);
+  },
+  [
+    notes('Should visualize 4.5/5, log Drawing :) and after 3s it should log current config and then Drawing :)')
+  ]
+)
+
+ratingStory.addChapter(
+  'garbage in callback testing',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "stars": 5
+    });
+    
+
+    rating.onUpdate = [];
+
+    rating.onDraw = {"garbage": 0}
+
+    rating.update({
+      "rating": 4.5,
+      "stars": 5
+    });
+  },
+  [
+    notes('Should show an error message and visualize 4.5/5')
   ]
 )
 
