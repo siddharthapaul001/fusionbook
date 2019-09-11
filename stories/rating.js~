@@ -1009,7 +1009,7 @@ ratingStory.addChapter(
       drawCalled++;
     }
 
-    var source = new EventSource('http://192.168.2.71:3000/teststarrating');
+    var source = new EventSource('http://localhost:3000/teststarrating');
     source.onmessage = function (msg) {
       if (msg.data < 0) {
         //end

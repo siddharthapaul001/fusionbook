@@ -213,9 +213,9 @@ class Definition {
                 "y1": "0%",
                 "y2": direction == 'column' ? "100%" : "0%"
             };
-        if(ratingFraction === this.config.ratingFraction && this.config.ratedFill === ratedFill && this.config.nonratedFill === nonratedFill && this.config.ratedStroke === ratedStroke && this.config.direction === direction && this.config.flow === flow){
+        if (ratingFraction === this.config.ratingFraction && this.config.ratedFill === ratedFill && this.config.nonratedFill === nonratedFill && this.config.ratedStroke === ratedStroke && this.config.direction === direction && this.config.flow === flow) {
             return;
-        }else{
+        } else {
             this.config.ratingFraction = ratingFraction;
             this.config.ratedFill = ratedFill;
             this.config.nonratedFill = nonratedFill;
@@ -376,7 +376,10 @@ class StarRating {
         } else {
             this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this.config.width / this.config.TotalStars : this.config.width, this._internalConfig.direction == 'column' ? this.config.height / this.config.TotalStars : this.config.height);
             this._internalConfig.side = this._internalConfig.sideOut - this.config.padding * 2 - this.config.strokeWidth * 2;
-            this._draw();
+            this._internalConfig.requestedAnimationFrame = true;
+            window.requestAnimationFrame(() => {
+                this._draw();
+            });
         }
     }
 
@@ -607,7 +610,7 @@ class StarRating {
             //extracted direction and flow from orientation
             this._internalConfig.direction = direction;
             this._internalConfig.flow = flow;
-        } 
+        }
         // else {
         //     this.elements.svg.update(this.config.height, this.config.width);
         // }
@@ -713,9 +716,9 @@ class StarRating {
                 }
             }
         }
-        if(typeof this.onDraw === 'function'){
+        if (typeof this.onDraw === 'function') {
             this.onDraw();
-        }else if(this.onDraw){
+        } else if (this.onDraw) {
             console.error('onDraw must be a function');
         }
     }
@@ -734,7 +737,7 @@ class StarRating {
     update(attribs) {
         if (attribs) {
             if (this._validateAndSet(attribs)) {
-                if(!this._internalConfig.requestedAnimationFrame){
+                if (!this._internalConfig.requestedAnimationFrame) {
                     window.requestAnimationFrame(() => {
                         this._draw();
                     });
@@ -745,9 +748,9 @@ class StarRating {
                 return null;
             }
         }
-        if(typeof this.onUpdate === 'function'){
+        if (typeof this.onUpdate === 'function') {
             this.onUpdate(this.config);
-        }else if(this.onUpdate){
+        } else if (this.onUpdate) {
             console.error('onUpdate must be a function');
         }
     }
