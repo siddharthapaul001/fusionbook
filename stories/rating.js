@@ -946,17 +946,17 @@ ratingStory.addChapter(
       "rating": 4.5,
       "stars": 5
     });
-    
 
-    rating.onUpdate = function(currentConfig){
+
+    rating.onUpdate = function (currentConfig) {
       console.log(currentConfig);
     }
 
-    rating.onDraw = function(){
+    rating.onDraw = function () {
       console.log('Drawing :)');
     }
 
-    setTimeout(function(){
+    setTimeout(function () {
       rating.update({
         "rating": 4.78,
         "stars": 5
@@ -975,16 +975,54 @@ ratingStory.addChapter(
       "rating": 4.5,
       "stars": 5
     });
-    
+
 
     rating.onUpdate = [];
 
-    rating.onDraw = {"garbage": 0}
+    rating.onDraw = { "garbage": 0 }
 
     rating.update({
       "rating": 4.5,
       "stars": 5
     });
+  },
+  [
+    notes('Should show an error message and visualize 4.5/5')
+  ]
+)
+
+
+ratingStory.addChapter(
+  'update rating from server SSE',
+  story => {
+    let timeElapsed = 0, startTime = (new Date() * 1), updateCalled = 0, drawCalled = 0,
+      rating = new StarRating(story, {
+        "rating": 4.5,
+        "stars": 5
+      });
+
+    rating.onUpdate = function (currentConfig) {
+      updateCalled++;
+    }
+
+    rating.onDraw = function () {
+      drawCalled++;
+    }
+
+    var source = new EventSource('http://localhost:3000/teststarrating');
+    source.onmessage = function (msg) {
+      if (msg.data < 0) {
+        //end
+        console.log('Completed in ' + timeElapsed + 'ms. _draw() called: ' + drawCalled + 'times. update() called: ' + updateCalled + ' times');
+        source.close();
+      } else {
+        rating.update({
+          "rating": msg.data,
+        });
+      }
+      timeElapsed = (new Date() * 1) - startTime;
+    }
+
   },
   [
     notes('Should show an error message and visualize 4.5/5')

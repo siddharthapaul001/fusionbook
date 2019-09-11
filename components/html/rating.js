@@ -203,7 +203,6 @@ class Definition {
 
         this.defs.appendChild(this.linearGradient);
         this.defs.appendChild(this.strokeLinearGradient);
-        svg.appendChild(this.defs);
         svg.addDefinition(this);
     }
 
@@ -276,6 +275,7 @@ class SVGContainer extends SVGElement {
 
     addDefinition(def) {
         if (def instanceof Definition) {
+            this.appendChild(def.defs);
             this._def = def;
         }
     }
@@ -706,6 +706,8 @@ class StarRating {
         }
         if(typeof this.onDraw === 'function'){
             this.onDraw();
+        }else if(this.onDraw){
+            console.error('onDraw must be a function');
         }
     }
 
@@ -736,6 +738,8 @@ class StarRating {
         }
         if(typeof this.onUpdate === 'function'){
             this.onUpdate(this.config);
+        }else if(this.onUpdate){
+            console.error('onUpdate must be a function');
         }
     }
 }
