@@ -1013,6 +1013,7 @@ ratingStory.addChapter(
     source.onmessage = function (msg) {
       if (msg.data < 0) {
         //end
+        timeElapsed = (new Date() * 1) - startTime;
         console.log('Completed in ' + timeElapsed + 'ms. _draw() called: ' + drawCalled + 'times. update() called: ' + updateCalled + ' times');
         source.close();
       } else {
@@ -1020,7 +1021,6 @@ ratingStory.addChapter(
           "rating": msg.data,
         });
       }
-      timeElapsed = (new Date() * 1) - startTime;
     }
 
   },
