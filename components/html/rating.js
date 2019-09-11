@@ -181,8 +181,6 @@ class SVGElement {
 * 
 * Generates linear gradient in svg definitions 
 * This class is used for partial color filling for fractional rating 
-* 
-* @memberof StarRating
 *          
 */
 class Definition {
