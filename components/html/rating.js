@@ -201,6 +201,7 @@ class Definition {
 
         this.defs.appendChild(this.linearGradient);
         this.defs.appendChild(this.strokeLinearGradient);
+        this.config = {};
         svg.addDefinition(this);
     }
 
@@ -212,6 +213,16 @@ class Definition {
                 "y1": "0%",
                 "y2": direction == 'column' ? "100%" : "0%"
             };
+        if(ratingFraction === this.config.ratingFraction && this.config.ratedFill === ratedFill && this.config.nonratedFill === nonratedFill && this.config.ratedStroke === ratedStroke && this.config.direction === direction && this.config.flow === flow){
+            return;
+        }else{
+            this.config.ratingFraction = ratingFraction;
+            this.config.ratedFill = ratedFill;
+            this.config.nonratedFill = nonratedFill;
+            this.config.ratedStroke = ratedStroke;
+            this.config.direction = direction;
+            this.config.flow = flow;
+        }
 
 
         this.linearGradient.setAttributes({
