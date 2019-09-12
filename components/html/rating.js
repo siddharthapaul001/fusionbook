@@ -40,6 +40,17 @@ function _pluckSize(size, str) {
     };
 }
 
+function _pluckNumber(num, precision = 0){
+    if(num){
+        if(!+num && +num !== 0){
+            console.error("Incorrect value: " + num);
+        }else{
+            return (+num).toFixed(precision);
+        }
+    }
+    return null;
+}
+
 /**
   * Validate color if color is in hexcode or rgb otherwise.
   * Used to check if the given fill / stroke color code is valid
@@ -68,7 +79,7 @@ function _validateColorCode(color) {
             return false;
         }
     }
-    return true;
+    return color;
 }
 
 
@@ -127,178 +138,6 @@ function _getPathString(side) {
     return str;
 }
 
-class SVGElement {
-    constructor(tag) {
-        this._elem = document.createElementNS("http://www.w3.org/2000/svg", tag);
-        this.attrs = {};
-    }
-
-    getNode() {
-        return this._elem;
-    }
-
-    removeNode() {
-        this._elem.parentNode.removeChild(this._elem);
-    }
-
-    appendChild(child) {
-        if (child instanceof Node) {
-            this._elem.appendChild(child);
-        } else if (child instanceof SVGElement) {
-            this._elem.appendChild(child.getNode());
-        } else {
-            console.error("Child must be Node or SVGElement");
-        }
-    }
-
-    removeChild(child) {
-        if (child instanceof Node) {
-            this._elem.removeChild(child);
-        } else if (child instanceof SVGElement) {
-            this._elem.removeChild(child.getNode());
-        } else {
-            console.error("Child must be Node or SVGElement");
-        }
-    }
-
-    setAttributes(attrs) {
-        let hasChange = false;
-        for (let attrName in attrs) {
-            if (this.attrs[attrName] !== attrs[attrName]) {
-                this._elem.setAttribute(attrName, attrs[attrName]);
-                this.attrs[attrName] = attrs[attrName];
-                hasChange = true;
-            }
-        }
-        return hasChange;
-    }
-}
-
-
-
-
-/**
-* 
-* Generates linear gradient in svg definitions 
-* This class is used for partial color filling for fractional rating 
-*          
-*/
-class Definition {
-    constructor(svg) {
-        this.defs = new SVGElement("defs");
-        this.linearGradient = new SVGElement("linearGradient"),
-            this.strokeLinearGradient = new SVGElement("linearGradient"),
-            this.Rated = new SVGElement("stop"),
-            this.NonRated = new SVGElement("stop"),
-            this.strokeRated = new SVGElement("stop"),
-            this.strokeNonRated = new SVGElement("stop");
-
-        this.linearGradient.appendChild(this.Rated);
-        this.linearGradient.appendChild(this.NonRated);
-
-        this.strokeLinearGradient.appendChild(this.strokeRated);
-        this.strokeLinearGradient.appendChild(this.strokeNonRated);
-
-        this.defs.appendChild(this.linearGradient);
-        this.defs.appendChild(this.strokeLinearGradient);
-        this.config = {};
-        svg.addDefinition(this);
-    }
-
-    update(rating, ratedFill, nonratedFill, ratedStroke, nonratedStroke, direction, flow) {
-        let ratingFraction = (rating - Math.floor(rating)).toFixed(2),
-            commonLinearGradient = {
-                "x1": "0%",
-                "x2": direction == 'row' ? "100%" : "0%",
-                "y1": "0%",
-                "y2": direction == 'column' ? "100%" : "0%"
-            };
-        if (ratingFraction === this.config.ratingFraction && this.config.ratedFill === ratedFill && this.config.nonratedFill === nonratedFill && this.config.ratedStroke === ratedStroke && this.config.direction === direction && this.config.flow === flow) {
-            return;
-        } else {
-            this.config.ratingFraction = ratingFraction;
-            this.config.ratedFill = ratedFill;
-            this.config.nonratedFill = nonratedFill;
-            this.config.ratedStroke = ratedStroke;
-            this.config.direction = direction;
-            this.config.flow = flow;
-        }
-
-
-        this.linearGradient.setAttributes({
-            "id": "partial-fill",
-            ...commonLinearGradient
-        });
-
-        this.strokeLinearGradient.setAttributes({
-            "id": "partial-stroke",
-            ...commonLinearGradient
-        });
-
-        if (flow == 'reverse') {
-            [ratedFill, nonratedFill] = [nonratedFill, ratedFill];
-            [ratedStroke, nonratedStroke] = [nonratedStroke, ratedStroke];
-        }
-
-        this.Rated.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + ratedFill + ";stop-opacity:1;"
-        });
-
-        this.NonRated.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + nonratedFill + ";stop-opacity:1;"
-        });
-
-        this.strokeRated.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + ratedStroke + ";stop-opacity:1;"
-        });
-
-        this.strokeNonRated.setAttributes({
-            "offset": (ratingFraction * 100) + "%",
-            "style": "stop-color:" + nonratedStroke + ";stop-opacity:1;"
-        });
-    }
-}
-
-class SVGContainer extends SVGElement {
-    constructor(parentElement, height, width) {
-        super("svg");
-        this.getNode().setAttribute("xmlns", "https://www.w3.org/2000/svg");
-        parentElement.appendChild(this.getNode());
-        this.setAttributes({ height, width });
-        [height, width] = this.getSize();
-        this.height = height;
-        this.width = width;
-    }
-
-    getSize() {
-        let rect = this.getNode().getBoundingClientRect();
-        return [rect.height, rect.width]
-    }
-
-    getDefinition() {
-        return this._def;
-    }
-
-    addDefinition(def) {
-        if (def instanceof Definition) {
-            this.appendChild(def.defs);
-            this._def = def;
-        }
-    }
-
-    update(height, width) {
-        if (this.setAttributes({ height, width })) {
-            //[height, width] = this.getSize();
-            this.height = height;
-            this.width = width;
-        }
-        return [this.height, this.width]
-    }
-}
-
 /**
   * StarRating Class is the main class which needs to be instantiate in order to use star raring.
 */
@@ -323,25 +162,25 @@ class StarRating {
             return null;
         }
 
-        this.elements = {};
-        this.config = {};
+        this._elements = {};
+        this._config = {};
         this._internalConfig = {};
-        this.elements.parentElement = parentElement;
+        this._elements.parentElement = parentElement;
 
         //setting defaults
-        this.config.height = 400;
-        this.config.width = 400;
-        this.config.TotalStars = 5; //N denotes number of stars
-        this.config.rating = undefined;
-        this.config.orientation = 'left-to-right';
-        this.config.padding = 1;
-        this.config.justifyContent = 'center';
-        this.config.alignItems = 'center';
-        this.config.strokeWidth = 0;
-        this.config.ratedFill = "#ff0";
-        this.config.nonratedFill = "#ddd";
-        this.config.ratedStroke = "none";
-        this.config.nonratedStroke = "none";
+        this._config.height = 400;
+        this._config.width = 400;
+        this._config.TotalStars = 5; //N denotes number of stars
+        this._config.rating = undefined;
+        this._config.orientation = 'left-to-right';
+        this._config.padding = 1;
+        this._config.justifyContent = 'center';
+        this._config.alignItems = 'center';
+        this._config.strokeWidth = 0;
+        this._config.ratedFill = "#ff0";
+        this._config.nonratedFill = "#ddd";
+        this._config.ratedStroke = "none";
+        this._config.nonratedStroke = "none";
         /*
         The styleset object structure to handle
         {
@@ -359,8 +198,60 @@ class StarRating {
         //usefull internally
         this._internalConfig.direction = 'row';
         this._internalConfig.flow = '';
-        this.elements.svg = new SVGContainer(parentElement, this.config.height, this.config.width);
-        this.elements.stars = [];
+        this._elements.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        this._elements.stars = [];
+
+        this._internalConfig.controller = [
+            {
+                "_config": ["orientation"],
+                "checks": [/^(left-to-right|right-to-left|top-to-bottom|bottom-to-top)$/g],
+                "onValidate": ["_getDirectionFlow"]
+            },
+            {
+                "_config": ["height", "width"],
+                "checks": [],
+                "onValidate": ["_setSVGProps"]
+            },
+            {
+                "_config": ["height", "width", "stars", "padding", "strokeWidth"],
+                "_internalConfig": ["direction"],
+                "checks": [_pluckSize, _pluckSize, _pluckNumber, _pluckSize, _pluckSize],
+                "onValidate": ["_calculateSide", "_dynCheck"]
+            },
+            {
+                "_internalConfig": ["side"],
+                "onDraw": ["_getRelativePath"]
+            },
+            {
+                "_config": ["justifyContent", "alignItems"],
+                "checks": [/^(start|end|center|space-evenly)$/g, /^(start|end|center)$/g],
+                "_internalConfig": ["side", "sideOut", "direction"],
+                "onDraw": ["_calculateBaseShift"]
+            },
+            {
+                "_internalConfig": ["baseX", "baseY", "shiftX", "shiftY", "relativePath"],
+                "onDraw": ["_setFullPath"]
+            },
+            {
+                "_config": ["rating"],
+                "checks": [],
+                "onValidate": ["_splitFraction"]
+            },
+            {
+                "_internalConfig": ["ratingFraction", "flow"],
+                "onDraw": ["_updateGradient"]
+            },
+            {
+                "_config": ["ratedFill", "nonratedFill", "ratedStroke", "nonratedStroke"],
+                "checks": [_validateColorCode, _validateColorCode, _validateColorCode, _validateColorCode],
+                "onDraw": ["_updateGradientColor"]
+            },
+            {
+                "_config": ["ratedFill", "nonratedFill", "ratedStroke", "nonratedStroke", "strokeWidth"],
+                "checks": [],
+                "onDraw": ["_updateStarStyle"]
+            }
+        ]
 
         if (attribs) {
             if (this._validateAndSet(attribs)) {
@@ -369,13 +260,13 @@ class StarRating {
                     this._draw();
                 });
             } else {
-                this.elements.svg.removeNode();
+                this._elements.svg.parentNode.removeChild(this._elements.svg);
                 console.error("Stopping execution");
                 return null;
             }
         } else {
-            this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this.config.width / this.config.TotalStars : this.config.width, this._internalConfig.direction == 'column' ? this.config.height / this.config.TotalStars : this.config.height);
-            this._internalConfig.side = this._internalConfig.sideOut - this.config.padding * 2 - this.config.strokeWidth * 2;
+            this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this._config.width / this._config.TotalStars : this._config.width, this._internalConfig.direction == 'column' ? this._config.height / this._config.TotalStars : this._config.height);
+            this._internalConfig.side = this._internalConfig.sideOut - this._config.padding * 2 - this._config.strokeWidth * 2;
             this._internalConfig.requestedAnimationFrame = true;
             window.requestAnimationFrame(() => {
                 this._draw();
@@ -402,219 +293,48 @@ class StarRating {
     *          
     */
     _validateAndSet(attribs) {
-        let height = _pluckSize(attribs['height'], 'Height'),
-            width = _pluckSize(attribs['width'], 'Width'),
-            N = attribs['stars'],
-            rating = attribs['rating'],
-            orientation = attribs['orientation'],
-            padding = _pluckSize(attribs['padding'], 'Padding'),
-            strokeWidth = _pluckSize(attribs['stroke-width'], 'Stroke Width'),
-            justifyContent = attribs['justify-content'],
-            alignItems = attribs['align-items'],
-            styles = {
-                "rated": attribs['rated'],
-                "nonrated": attribs['nonrated']
-            };
-        let validOrientation = ['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'],
-            validJustifyContent = ['center', 'space-evenly', 'start', 'end'],
-            validAlignItems = ['center', 'start', 'end'],
-            shouldContinue = true,
-            side, sideOut,
-            direction,
-            flow;
+        let i, j, config, check, correctValue, errors = [], changes = {};
+        // this._internalConfig.controller.forEach(dep => {
+        //     if(dep["_config"]){
+        //         dep["_config"].forEach(configName => {
+        //             if(attribs[configName] === undefined){
 
-        //check height and width
-        width = width.num ? width.num : this.config.width;
-        height = height.num ? height.num : this.config.height;
-        //[height, width] = this.elements.svg.update(height, width);
+        //             }
+        //         });
+        //     }
+        //     if(dep["_internalConfig"]){
+        //         dep["_internalConfig"].forEach(configName => {
 
-        if (width < 20) {
-            console.error("Minimum width value is 20");
-            width = this.config.width;
-        }
-
-        if (height < 20) {
-            console.error("Minimum width value is 20");
-            height = this.config.height;
-        }
-
-        //[height, width] = this.elements.svg.update(height, width);
-
-        //check if number of stars => N is ok otherwise set the default value 5
-        if (!+N) {
-            N = this.config.TotalStars;
-        }
-        if (N <= 0) {
-            console.error("No of stars must be greater than 0");
-            shouldContinue = false;
-        }
-        //If N is fraction no issue because it used to limit loops only
-
-        //check if rating is given as number otherwise set the default value 5
-        if (!+rating && rating != 0) {
-            rating = this.config.rating;
-        }
-
-        if (rating && (rating > N || rating < 0)) {
-            console.error("Rating should be greater than 0 and less than No of stars");
-            shouldContinue = false;
-        }
-
-        //justify content
-        if (!validJustifyContent.includes(justifyContent)) {
-            if (justifyContent) {
-                console.error("Incorrect value for justify-content");
-            }
-            justifyContent = this.config.justifyContent;
-        }
-
-        //Align items
-        if (!validAlignItems.includes(alignItems)) {
-            if (alignItems) {
-                console.error("Incorrect value for align-items");
-            }
-            alignItems = this.config.alignItems;
-        }
-
-        //orientation
-        if (!validOrientation.includes(orientation)) {
-            if (orientation) {
-                console.error("Incorrect value for orientation");
-            }
-            orientation = this.config.orientation;
-        }
-
-        //internal variables to ease of control
-        direction = (orientation == 'left-to-right' || orientation == 'right-to-left') ? 'row' : 'column';
-        flow = (orientation == 'right-to-left' || orientation == 'bottom-to-top') ? 'reverse' : '';
-
-        //assign padding
-        if (!padding.num) {
-            if (attribs['padding']) {
-                console.error("Incorrect padding value");
-            }
-            padding = this.config.padding;
-        } else {
-            padding = padding.num;
-        }
-
-        if (padding < 1) {
-            console.error("Incorrect padding.");
-            padding = this.config.padding;
-        }
-
-        //assign stroke-width
-        if (!strokeWidth.num) {
-            if (attribs['stroke-width']) {
-                console.error("Incorrect stroke width value");
-            }
-            strokeWidth = this.config.strokeWidth;
-        } else {
-            strokeWidth = strokeWidth.num;
-        }
-
-
-        //validatind and adding styles
-        if (!styles['rated']) {
-            styles['rated'] = {};
-        }
-        if (!styles['nonrated']) {
-            styles['nonrated'] = {};
-        }
-
-        styles['rated']['fill'] = _validateColorCode(styles['rated']['fill']) ? styles['rated']['fill'] : this.config.ratedFill;
-        styles['rated']['stroke'] = _validateColorCode(styles['rated']['stroke']) ? styles['rated']['stroke'] : this.config.ratedStroke;
-
-        styles['nonrated']['fill'] = _validateColorCode(styles['nonrated']['fill']) ? styles['nonrated']['fill'] : this.config.nonratedFill;
-        styles['nonrated']['stroke'] = _validateColorCode(styles['nonrated']['stroke']) ? styles['nonrated']['stroke'] : this.config.nonratedStroke;
-
-        //Do calculation to check managable conditions
-        if (shouldContinue) {
-            sideOut = Math.min(direction == 'row' ? width / N : width, direction == 'column' ? height / N : height);
-            if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
-                console.error("Incorrect stroke-width");
-                strokeWidth = this.config.strokeWidth;
-            }
-            if (padding < 1 || padding > 0.10 * sideOut) {
-                console.error("Incorrect padding");
-                padding = this.config.padding;
-            }
-            side = sideOut - (padding * 2) - (strokeWidth * 2);
-            //console.log(sideOut, side, padding, strokeWidth);
-            if (sideOut < 16) {
-                console.error("Could not acomodate so many stars. Reduce no of stars");
-                shouldContinue = false;
-            }
-            if (side < 10) {
-                if (padding > 2) {
-                    console.error("Decrease padding.");
-                    padding = this.config.padding;
-                    side = sideOut - padding * 2 - strokeWidth * 2;
-                } else if (strokeWidth > (0.10 * sideOut)) {
-                    console.error("Decrease stroke-width.");
-                    strokeWidth = this.config.strokeWidth;
-                    side = sideOut - (padding * 2) - (strokeWidth * 2);
+        //         });
+        //     }
+        // });
+        for(i = 0; i < this._internalConfig.controller.length; i++){
+            if(this._internalConfig.controller[i]["_config"] !== undefined){
+                for(j = 0; j < this._internalConfig.controller[i]["_config"].length; j++){
+                    config = this._internalConfig.controller[i]["_config"][j];
+                    check = this._internalConfig.controller[i]["checks"][j];
+                    if(attribs[config] !== undefined){
+                        if(check instanceof RegExp){
+                            correctValue = attribs[config].match(check);
+                            if(correctValue && correctValue[0] !== this._config[config]){
+                                changes[config] = correctValue[0];
+                            }
+                        }else if(typeof check === 'function'){
+                            correctValue = check(attribs[config]);
+                            if(correctValue && correctValue !== this._config[config]){
+                                changes[config] = correctValue;
+                            }
+                        }
+                    }
                 }
             }
-
-            //If still side is less than 10 set padding and stroke-width to 2 and 0
-            //console.log(side);
-            if (side < 10 && padding > 2) {
-                console.warn("Automatically setting padding to default");
-                padding = 2;
-                side = sideOut - (padding * 2) - (strokeWidth * 2);
-            }
-            if (side < 10 && strokeWidth > 0) {
-                console.warn("Automatically setting stroke-width to 0");
-                strokeWidth = 0;
-                side = sideOut - (padding * 2) - (strokeWidth * 2);
-            }
-
-            //If still side is less than 10 non-managable
-            if (side < 10) {
-                console.error("Non managable error. Try with different values");
-                shouldContinue = false;
-            }
-        }
-
-        //check if it is non-managable condition
-        if (shouldContinue) {
-            this.config.height = height;
-            this.config.width = width;
-            this.config.orientation = orientation;
-            this.config.padding = padding;
-            this.config.rating = rating;
-            this.config.TotalStars = N;
-            this.config.ratedFill = styles['rated']['fill'];
-            this.config.ratedStroke = styles['rated']['stroke'];
-            this.config.nonratedFill = styles['nonrated']['fill'];
-            this.config.nonratedStroke = styles['nonrated']['stroke'];
-            this.config.strokeWidth = strokeWidth;
-
-            //Show a warning if stroke width is given but stroke-color is None as stroke is none show not visible
-            if (this.config.strokeWidth > 0) {
-                if (this.config.ratedStroke == 'none') {
-                    console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting rated stroke color as black");
-                    this.config.ratedStroke = '#000';
-                }
-                if (this.config.nonratedStroke == 'none') {
-                    console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting nonrated stroke color as black");
-                    this.config.nonratedStroke = '#000';
+            if(this._internalConfig.controller[i]["_internalConfig"] !== undefined){
+                for(j = 0; j < this._internalConfig.controller[i]["_internalConfig"].length; j++){
+                    
                 }
             }
-
-            this.config.justifyContent = justifyContent;
-            this.config.alignItems = alignItems;
-            this._internalConfig.side = side;
-            this._internalConfig.sideOut = sideOut;
-            //extracted direction and flow from orientation
-            this._internalConfig.direction = direction;
-            this._internalConfig.flow = flow;
         }
-        // else {
-        //     this.elements.svg.update(this.config.height, this.config.width);
-        // }
-        return shouldContinue;
+        return true;
     }
 
     /**
@@ -627,100 +347,8 @@ class StarRating {
     *          
     */
     _draw() {
-        this._internalConfig.requestedAnimationFrame = false;
-        let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
-            rating = !this.config.rating && this.config.rating != 0 ? this.config.TotalStars : this.config.rating,
-            currentStars = this.elements.stars.length,
-            relativePath = _getPathString(this._internalConfig.side);
-
-        //update svg height and width
-        this.elements.svg.update(this.config.height, this.config.width);
-        //remove def if exist
-        let defs = this.elements.svg.getDefinition();
-
-        if (_isFraction(rating)) {
-            //this._createGradientDefinitions(defs);
-            if (!defs) {
-                defs = new Definition(this.elements.svg);
-            }
-            defs.update(rating, this.config.ratedFill, this.config.nonratedFill, this.config.ratedStroke, this.config.nonratedStroke, this._internalConfig.direction, this._internalConfig.flow);
-        }
-
-        if (this._internalConfig.direction == 'row') {
-            xShift = this._internalConfig.sideOut;
-            if (this.config.justifyContent == 'start') {
-                baseX = (this._internalConfig.sideOut / 2);
-            } else if (this.config.justifyContent == 'center') {
-                baseX = (this._internalConfig.sideOut / 2) + ((this.config.width - (this._internalConfig.sideOut * this.config.TotalStars)) / 2);
-            } else if (this.config.justifyContent == 'end') {
-                baseX = (this.config.width - (this._internalConfig.sideOut * this.config.TotalStars)) + (this._internalConfig.sideOut / 2);
-            } else if (this.config.justifyContent == 'space-evenly') {
-                xShift = this.config.width / this.config.TotalStars;
-                baseX = xShift / 2;
-                //console.log('space-evenly');
-            }
-            if (this.config.alignItems == 'center') {
-                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2) + ((this.config.height - this._internalConfig.sideOut) / 2);
-            } else if (this.config.alignItems == 'start') {
-                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
-            } else if (this.config.alignItems == 'end') {
-                baseY = (this.config.height - this._internalConfig.sideOut);
-            }
-        } else if (this._internalConfig.direction == 'column') {
-            yShift = this._internalConfig.sideOut;
-            if (this.config.justifyContent == 'start') {
-                baseY = (this._internalConfig.sideOut - this._internalConfig.side) / 2;
-            } else if (this.config.justifyContent == 'center') {
-                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
-            } else if (this.config.justifyContent == 'end') {
-                baseY = (this.config.height - (this._internalConfig.sideOut * this.config.TotalStars));
-            } else if (this.config.justifyContent == 'space-evenly') {
-                yShift = this.config.height / this.config.TotalStars;
-                baseY = (yShift - this._internalConfig.side) / 2;
-            }
-
-            //console.log(this.alignItems);
-            if (this.config.alignItems == 'center') {
-                baseX = (this._internalConfig.sideOut / 2) + ((this.config.width - this._internalConfig.sideOut) / 2);
-            } else if (this.config.alignItems == 'start') {
-                baseX = this._internalConfig.sideOut / 2;
-            } else if (this.config.alignItems == 'end') {
-                baseX = this.config.width - (this._internalConfig.sideOut / 2);
-            }
-        }
-
-        for (i = 0; i < Math.max(currentStars, this.config.TotalStars); i++) {
-            j = this._internalConfig.flow == 'reverse' ? this.config.TotalStars - i - 1 : i;
-            if (i >= currentStars) {
-                let star = new SVGElement("path");
-                this.elements.stars.push(star);
-                this.elements.svg.appendChild(star);
-            } else if (i >= this.config.TotalStars) {
-                this.elements.stars.pop().removeNode();
-            }
-            if (i < this.config.TotalStars) {
-                if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
-                    this.elements.stars[i].setAttributes({
-                        "fill": "url(#partial-fill)",
-                        "stroke": "url(#partial-stroke)",
-                        "stroke-width": this.config.strokeWidth + "px",
-                        "d": 'M' + (baseX + (xShift * i)) + ',' + (baseY + (yShift * i)) + ' ' + relativePath
-                    });
-                } else {
-                    this.elements.stars[i].setAttributes({
-                        "fill": j < Math.ceil(rating) ? this.config.ratedFill : this.config.nonratedFill,
-                        "stroke": j < Math.ceil(rating) ? this.config.ratedStroke : this.config.nonratedStroke,
-                        "stroke-width": this.config.strokeWidth + "px",
-                        "d": 'M' + (baseX + (xShift * i)) + ',' + (baseY + (yShift * i)) + ' ' + relativePath
-                    });
-                }
-            }
-        }
-        if (typeof this.onDraw === 'function') {
-            this.onDraw();
-        } else if (this.onDraw) {
-            console.error('onDraw must be a function');
-        }
+        //this._elements.svg.setAttribute("height", this._config.height);
+        //this._elements.svg.setAttribute("width", this._config.width);
     }
 
     /**
@@ -749,7 +377,7 @@ class StarRating {
             }
         }
         if (typeof this.onUpdate === 'function') {
-            this.onUpdate(this.config);
+            this.onUpdate(this._config);
         } else if (this.onUpdate) {
             console.error('onUpdate must be a function');
         }
