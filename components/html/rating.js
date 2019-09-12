@@ -293,7 +293,7 @@ class StarRating {
     *          
     */
     _validateAndSet(attribs) {
-        let i, j, config, check, correctValue, errors = [], changes = {};
+        let correctValue, errors = [], changes = {}, outerPromises = [], promises = [];
         // this._internalConfig.controller.forEach(dep => {
         //     if(dep["_config"]){
         //         dep["_config"].forEach(configName => {
@@ -308,32 +308,36 @@ class StarRating {
         //         });
         //     }
         // });
-        for(i = 0; i < this._internalConfig.controller.length; i++){
-            if(this._internalConfig.controller[i]["_config"] !== undefined){
-                for(j = 0; j < this._internalConfig.controller[i]["_config"].length; j++){
-                    config = this._internalConfig.controller[i]["_config"][j];
-                    check = this._internalConfig.controller[i]["checks"][j];
-                    if(attribs[config] !== undefined){
-                        if(check instanceof RegExp){
-                            correctValue = attribs[config].match(check);
-                            if(correctValue && correctValue[0] !== this._config[config]){
-                                changes[config] = correctValue[0];
-                            }
-                        }else if(typeof check === 'function'){
-                            correctValue = check(attribs[config]);
-                            if(correctValue && correctValue !== this._config[config]){
-                                changes[config] = correctValue;
+        for(let i = 0, iLim = this._internalConfig.controller.length; i < iLim; i++){
+            (() =>{
+                if(this._internalConfig.controller[i]["_config"] !== undefined){
+                    for(let j = 0, jLim = this._internalConfig.controller[i]["_config"].length; j < jLim; j++){
+                        let config = this._internalConfig.controller[i]["_config"][j];
+                        let check = this._internalConfig.controller[i]["checks"][j];
+                        
+                        if(attribs[config] !== undefined){
+                            if(check instanceof RegExp){
+                                correctValue = attribs[config].match(check);
+                                if(correctValue && correctValue[0] !== this._config[config]){
+                                    changes[config] = correctValue[0];
+                                }
+                            }else if(typeof check === 'function'){
+                                correctValue = check(attribs[config]);
+                                if(correctValue && correctValue !== this._config[config]){
+                                    changes[config] = correctValue;
+                                }
                             }
                         }
                     }
                 }
-            }
-            if(this._internalConfig.controller[i]["_internalConfig"] !== undefined){
-                for(j = 0; j < this._internalConfig.controller[i]["_internalConfig"].length; j++){
-                    
+                if(this._internalConfig.controller[i]["_internalConfig"] !== undefined){
+                    for(let j = 0, jLim = this._internalConfig.controller[i]["_internalConfig"].length; j < jLim; j++){
+                        
+                    }
                 }
-            }
+            })();
         }
+
         return true;
     }
 
