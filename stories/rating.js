@@ -914,7 +914,7 @@ ratingStory.addChapter(
     }
 
     setTimeout(function () {
-      while (T < 100) {
+      while (T < 10000) {
         rating.update({
           "width": 400 + ((T * 100) % 400),
           "height": 400 + ((T * 100) % 400),

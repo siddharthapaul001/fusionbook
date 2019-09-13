@@ -379,7 +379,6 @@ class StarRating {
         if (attribs) {
             if (this._validateAndSet(attribs)) {
                 this._calculateSide(this._config.padding, this._config.strokeWidth);
-                this._calculateBaseShift();
                 this._internalConfig.requestedAnimationFrame = true;
                 window.requestAnimationFrame(() => {
                     this._draw();
@@ -390,8 +389,7 @@ class StarRating {
                 return null;
             }
         } else {
-            this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this._config.width / this._config.TotalStars : this._config.width, this._internalConfig.direction == 'column' ? this._config.height / this._config.TotalStars : this._config.height);
-            this._internalConfig.side = this._internalConfig.sideOut - this._config.padding * 2 - this._config.strokeWidth * 2;
+            this._calculateSide(this._config.padding, this._config.strokeWidth);
             this._internalConfig.requestedAnimationFrame = true;
             window.requestAnimationFrame(() => {
                 this._draw();
@@ -430,8 +428,6 @@ class StarRating {
             if (side !== this._internalConfig.side || sideOut !== this._internalConfig.sideOut) {
                 this._internalConfig.side = side;
                 this._internalConfig.sideOut = sideOut;
-                this._onDraw['_calculateBaseShift'] = true;
-                this._onDraw['_getRelativePath'] = true;
             }
     }
 
@@ -520,11 +516,9 @@ class StarRating {
         if (attribs.orientation !== undefined) {
             if (['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'].includes(attribs.orientation) && correctValue !== this._config.orientation) {
                 this._config.orientation = attribs.orientation;
-                onValidate["_calculateSide"] = true;
                 attribs.direction = (attribs.orientation === 'top-to-bottom' || attribs.orientation === 'bottom-to-top') ? 'column' : 'row';
                 if (this._internalConfig.direction !== attribs.direction) {
                     this._internalConfig.direction = direction;
-                    onValidate["_calculateSide"] = true;
                 }
                 this._internalConfig.flow = (attribs.orientation === 'left-to-right' || attribs.orientation === 'top-to-bottom') ? '' : 'reverse';
             }
@@ -532,19 +526,15 @@ class StarRating {
 
         if (attribs.height !== undefined) {
             correctValue = _pluckSize(attribs.height);
-            if (correctValue && correctValue > 20 && correctValue !== this._config.height) {
+            if (correctValue && correctValue >= 20 && correctValue !== this._config.height) {
                 this._config.height = correctValue;
-                onValidate["_calculateSide"] = true;
-                this._onDraw["_setSVGStyle"] = true;
             }
         }
 
         if (attribs.width !== undefined) {
             correctValue = _pluckSize(attribs.width);
-            if (correctValue && correctValue > 20 && correctValue !== this._config.width) {
+            if (correctValue && correctValue >= 20 && correctValue !== this._config.width) {
                 this._config.width = correctValue;
-                onValidate["_calculateSide"] = true;
-                this._onDraw["_setSVGStyle"] = true;
             }
         }
 
@@ -552,7 +542,6 @@ class StarRating {
             correctValue = +attribs.stars;
             if (correctValue > 0 && correctValue !== this._config.TotalStars) {
                 this._config.TotalStars = correctValue;
-                onValidate['_calculateSide'] = true;
             } else if (!correctValue) {
                 console.error("Incorrect value for stars: " + attribs.stars);
             }
@@ -560,18 +549,15 @@ class StarRating {
 
         if (attribs.padding !== undefined) {
             correctValue = _pluckSize(attribs.padding);
-            if (correctValue && correctValue > 20 && correctValue !== this._config.padding) {
+            if (correctValue && correctValue !== this._config.padding) {
                 padding = correctValue;
-                onValidate["_calculateSide"] = true;
             }
         }
 
         if (attribs.strokeWidth !== undefined) {
             correctValue = _pluckSize(attribs.strokeWidth);
-            if (correctValue && correctValue > 20 && correctValue !== this._config.strokeWidth) {
+            if (correctValue && correctValue !== this._config.strokeWidth) {
                 strokeWidth = correctValue;
-                onValidate["_calculateSide"] = true;
-                this._onDraw['_updateStarStyle'] = true;
             }
         }
 
@@ -579,7 +565,6 @@ class StarRating {
             correctValue = +attribs.rating; //using toFixed reduces performance so do it later
             if (correctValue >= 0 && correctValue <= this._config.TotalStars && correctValue !== this._config.rating) {
                 this._config.rating = correctValue;
-                this._onDraw['_setDefinition'] = true;
             } else if (!correctValue) {
                 console.log('Incorrect rating value: ' + attribs.rating);
             }
@@ -588,14 +573,12 @@ class StarRating {
         if (attribs.justifyContent !== undefined) {
             if (['start', 'end', 'center', 'space-evenly'].includes(attribs.justifyContent) && attribs.justifyContent !== this._config.justifyContent) {
                 this._config.justifyContent = attribs.justifyContent;
-                this._onDraw['_calculateBaseShift'] = true;
             }
         }
 
         if (attribs.alignItems !== undefined) {
             if (['start', 'end', 'center'].includes(attribs.alignItems) && attribs.alignItems !== this._config.alignItems) {
                 this._config.alignItems = attribs.alignItems;
-                this._onDraw['_calculateBaseShift'] = true;
             }
         }
 
@@ -603,8 +586,6 @@ class StarRating {
             correctValue = _validateColorCode(attribs.ratedFill);
             if (correctValue && correctValue !== this._config.ratedFill) {
                 this._config.ratedFill = correctValue;
-                this._onDraw['_updateStarStyle'] = true;
-                this._onDraw['_updateDefinitionFill'] = true;
             } else if (!correctValue) {
                 console.error('Incorrect color for ratedFill: ' + attribs.ratedFill);
             }
@@ -615,8 +596,6 @@ class StarRating {
             correctValue = _validateColorCode(attribs.nonratedFill);
             if (correctValue && correctValue !== this._config.nonratedFill) {
                 this._config.nonratedFill = correctValue;
-                this._onDraw['_updateStarStyle'] = true;
-                this._onDraw['_updateDefinitionFill'] = true;
             } else if (!correctValue) {
                 console.error('Incorrect color for ratedFill: ' + attribs.nonratedFill);
             }
@@ -627,8 +606,6 @@ class StarRating {
             correctValue = _validateColorCode(attribs.ratedStroke);
             if (correctValue && correctValue !== this._config.ratedStroke) {
                 this._config.ratedStroke = correctValue;
-                this._onDraw['_updateStarStyle'] = true;
-                this._onDraw['_updateDefinitionStroke'] = true;
             } else if (!correctValue) {
                 console.error('Incorrect color for ratedFill: ' + attribs.ratedStroke);
             }
@@ -638,8 +615,6 @@ class StarRating {
             correctValue = _validateColorCode(attribs.nonratedStroke);
             if (correctValue && correctValue !== this._config.nonratedStroke) {
                 this._config.nonratedStroke = correctValue;
-                this._onDraw['_updateStarStyle'] = true;
-                this._onDraw['_updateDefinitionStroke'] = true;
             } else if (!correctValue) {
                 console.error('Incorrect color for ratedFill: ' + attribs.nonratedStroke);
             }
