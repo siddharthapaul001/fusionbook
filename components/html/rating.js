@@ -10,8 +10,14 @@
   *          returns resolvedSize which contains num to store numeric size value and unit to store its unit
 */
 function _pluckSize(size, str) {
+    if (!size) {
+        console.error("Error in size value " + str + ": " + size);
+        return null;
+    }
+    size += '';
     str = str ? 'of ' + str : '';
-    let num = +(size + '').replace(/px$/g, '');
+    //regex match reduces tests upto 80k
+    let l = (size + '').length, unit = size.slice(-2);
     // let num = (size + '').match(/\d+/g),
     //     unit = (size + '').match(/px|%|vh|vw/g) || [''];
 
@@ -24,20 +30,23 @@ function _pluckSize(size, str) {
     //         unit: ''
     //     };
     // }
-    if (!+num || num < 0) {
-        if (size) {
-            console.error("Error in size value " + str + ": " + size);
-        }
-        return {
-            num: null,
-            unit: ''
+    if (unit === 'px') {
+        return +size.slice(l - 2);
+    } else if (+unit !== NaN) {
+        return +size;
+    }
+    return null;
+}
+
+function _pluckNumber(num, precision = 0) {
+    if (num) {
+        if (!+num && +num !== 0) {
+            console.error("Incorrect value: " + num);
+        } else {
+            return (+num).toFixed(precision);
         }
     }
-
-    return {
-        num,  // +num[0],
-        unit: 'px' // unit[0]
-    };
+    return null;
 }
 
 /**
@@ -57,8 +66,9 @@ function _validateColorCode(color) {
         console.error("Incorrect color specified");
         return false;
     }
+    //Need optimization
     if (color.startsWith('#')) {
-        if (!color.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/g)) {
+        if (isNaN(parseInt(color.slice(1), 16)) || (color.length !== 4 && color.length !== 7)) {
             console.error("Incorrect hex color code");
             return false;
         }
@@ -68,7 +78,7 @@ function _validateColorCode(color) {
             return false;
         }
     }
-    return true;
+    return color;
 }
 
 
@@ -84,6 +94,7 @@ function _validateColorCode(color) {
 function _isFraction(num) {
     return !(Math.abs(num - Math.floor(num)) < Number.EPSILON);
 }
+
 
 /**
 * 
@@ -201,7 +212,7 @@ class Definition {
 
         this.defs.appendChild(this.linearGradient);
         this.defs.appendChild(this.strokeLinearGradient);
-        this.config = {};
+        this._config = {};
         svg.addDefinition(this);
     }
 
@@ -213,15 +224,15 @@ class Definition {
                 "y1": "0%",
                 "y2": direction == 'column' ? "100%" : "0%"
             };
-        if (ratingFraction === this.config.ratingFraction && this.config.ratedFill === ratedFill && this.config.nonratedFill === nonratedFill && this.config.ratedStroke === ratedStroke && this.config.direction === direction && this.config.flow === flow) {
+        if (ratingFraction === this._config.ratingFraction && this._config.ratedFill === ratedFill && this._config.nonratedFill === nonratedFill && this._config.ratedStroke === ratedStroke && this._config.direction === direction && this._config.flow === flow) {
             return;
         } else {
-            this.config.ratingFraction = ratingFraction;
-            this.config.ratedFill = ratedFill;
-            this.config.nonratedFill = nonratedFill;
-            this.config.ratedStroke = ratedStroke;
-            this.config.direction = direction;
-            this.config.flow = flow;
+            this._config.ratingFraction = ratingFraction;
+            this._config.ratedFill = ratedFill;
+            this._config.nonratedFill = nonratedFill;
+            this._config.ratedStroke = ratedStroke;
+            this._config.direction = direction;
+            this._config.flow = flow;
         }
 
 
@@ -323,25 +334,28 @@ class StarRating {
             return null;
         }
 
-        this.elements = {};
-        this.config = {};
+        this._elements = {};
+        this._config = {};
         this._internalConfig = {};
-        this.elements.parentElement = parentElement;
+        this._onDraw = {};
+        this._drawnState = {};
+        this._onDefinition = [];
+        this._elements.parentElement = parentElement;
 
         //setting defaults
-        this.config.height = 400;
-        this.config.width = 400;
-        this.config.TotalStars = 5; //N denotes number of stars
-        this.config.rating = undefined;
-        this.config.orientation = 'left-to-right';
-        this.config.padding = 1;
-        this.config.justifyContent = 'center';
-        this.config.alignItems = 'center';
-        this.config.strokeWidth = 0;
-        this.config.ratedFill = "#ff0";
-        this.config.nonratedFill = "#ddd";
-        this.config.ratedStroke = "none";
-        this.config.nonratedStroke = "none";
+        this._config.height = 400;
+        this._config.width = 400;
+        this._config.TotalStars = 5; //N denotes number of stars
+        this._config.rating = undefined;
+        this._config.orientation = 'left-to-right';
+        this._config.padding = 1;
+        this._config.justifyContent = 'center';
+        this._config.alignItems = 'center';
+        this._config.strokeWidth = 0;
+        this._config.ratedFill = "#ff0";
+        this._config.nonratedFill = "#ddd";
+        this._config.ratedStroke = "none";
+        this._config.nonratedStroke = "none";
         /*
         The styleset object structure to handle
         {
@@ -359,23 +373,25 @@ class StarRating {
         //usefull internally
         this._internalConfig.direction = 'row';
         this._internalConfig.flow = '';
-        this.elements.svg = new SVGContainer(parentElement, this.config.height, this.config.width);
-        this.elements.stars = [];
+        this._elements.svg = new SVGContainer(parentElement, this._config.height, this._config.width);
+        this._elements.stars = [];
 
         if (attribs) {
             if (this._validateAndSet(attribs)) {
+                this._calculateSide(this._config.padding, this._config.strokeWidth);
+                this._calculateBaseShift();
                 this._internalConfig.requestedAnimationFrame = true;
                 window.requestAnimationFrame(() => {
                     this._draw();
                 });
             } else {
-                this.elements.svg.removeNode();
+                this._elements.svg.removeNode();
                 console.error("Stopping execution");
                 return null;
             }
         } else {
-            this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this.config.width / this.config.TotalStars : this.config.width, this._internalConfig.direction == 'column' ? this.config.height / this.config.TotalStars : this.config.height);
-            this._internalConfig.side = this._internalConfig.sideOut - this.config.padding * 2 - this.config.strokeWidth * 2;
+            this._internalConfig.sideOut = Math.min(this._internalConfig.direction == 'row' ? this._config.width / this._config.TotalStars : this._config.width, this._internalConfig.direction == 'column' ? this._config.height / this._config.TotalStars : this._config.height);
+            this._internalConfig.side = this._internalConfig.sideOut - this._config.padding * 2 - this._config.strokeWidth * 2;
             this._internalConfig.requestedAnimationFrame = true;
             window.requestAnimationFrame(() => {
                 this._draw();
@@ -383,6 +399,104 @@ class StarRating {
         }
     }
 
+    _calculateSide(padding, strokeWidth){
+        let side, sideOut;
+        sideOut = this._internalConfig.direction === 'row' ? this._config.width / this._config.TotalStars : this._config.width;
+            side = this._internalConfig.direction === 'column' ? this._config.height / this._config.TotalStars : this._config.height;
+            sideOut = side < sideOut ? side : sideOut;
+
+            if (strokeWidth !== undefined) {
+                if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
+                    console.error("Incorrect strokeWidth setting to default");
+                } else {
+                    this._config.strokeWidth = strokeWidth;
+                }
+            }
+
+            if (padding !== undefined) {
+                if (padding < 1 || padding > 0.10 * sideOut) {
+                    console.error("Incorrect padding setting to default");
+                } else {
+                    this._config.padding = 1;
+                }
+            }
+
+            side = sideOut - (this._config.padding * 2) - (this._config.strokeWidth * 2);
+
+            if (side < 10) {
+                return false;
+            }
+
+            if (side !== this._internalConfig.side || sideOut !== this._internalConfig.sideOut) {
+                this._internalConfig.side = side;
+                this._internalConfig.sideOut = sideOut;
+                this._onDraw['_calculateBaseShift'] = true;
+                this._onDraw['_getRelativePath'] = true;
+            }
+    }
+
+    _calculateBaseShift(){
+        let xShift = 0, yShift = 0, baseX = 0, baseY = 0;
+        if (this._onDraw._calculateBaseShift) {
+            if (this._internalConfig.direction == 'row') {
+                xShift = this._internalConfig.sideOut;
+                if (this._config.justifyContent == 'start') {
+                    baseX = (this._internalConfig.sideOut / 2);
+                } else if (this._config.justifyContent == 'center') {
+                    baseX = (this._internalConfig.sideOut / 2) + ((this._config.width - (this._internalConfig.sideOut * this._config.TotalStars)) / 2);
+                } else if (this._config.justifyContent == 'end') {
+                    baseX = (this._config.width - (this._internalConfig.sideOut * this._config.TotalStars)) + (this._internalConfig.sideOut / 2);
+                } else if (this._config.justifyContent == 'space-evenly') {
+                    xShift = this._config.width / this._config.TotalStars;
+                    baseX = xShift / 2;
+                }
+                if (this._config.alignItems == 'center') {
+                    baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2) + ((this._config.height - this._internalConfig.sideOut) / 2);
+                } else if (this._config.alignItems == 'start') {
+                    baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
+                } else if (this._config.alignItems == 'end') {
+                    baseY = (this._config.height - this._internalConfig.sideOut);
+                }
+            } else if (this._internalConfig.direction == 'column') {
+                yShift = this._internalConfig.sideOut;
+                if (this._config.justifyContent == 'start') {
+                    baseY = (this._internalConfig.sideOut - this._internalConfig.side) / 2;
+                } else if (this._config.justifyContent == 'center') {
+                    baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
+                } else if (this._config.justifyContent == 'end') {
+                    baseY = (this._config.height - (this._internalConfig.sideOut * this._config.TotalStars));
+                } else if (this._config.justifyContent == 'space-evenly') {
+                    yShift = this._config.height / this._config.TotalStars;
+                    baseY = (yShift - this._internalConfig.side) / 2;
+                }
+
+                //console.log(this.alignItems);
+                if (this._config.alignItems == 'center') {
+                    baseX = (this._internalConfig.sideOut / 2) + ((this._config.width - this._internalConfig.sideOut) / 2);
+                } else if (this._config.alignItems == 'start') {
+                    baseX = this._internalConfig.sideOut / 2;
+                } else if (this._config.alignItems == 'end') {
+                    baseX = this._config.width - (this._internalConfig.sideOut / 2);
+                }
+            }
+            if (this._internalConfig.baseX !== baseX) {
+                this._internalConfig.baseX = baseX;
+            }
+
+            if (this._internalConfig.baseY !== baseY) {
+                this._internalConfig.baseY = baseY;
+            }
+
+            if (this._internalConfig.xShift !== xShift) {
+                this._internalConfig.xShift = xShift;
+            }
+
+            if (this._internalConfig.yShift !== yShift) {
+                this._internalConfig.yShift = yShift;
+            }
+            this._onDraw['_reassignPath'] = true;
+        }
+    }
 
     /**
     * 
@@ -402,219 +516,141 @@ class StarRating {
     *          
     */
     _validateAndSet(attribs) {
-        let height = _pluckSize(attribs['height'], 'Height'),
-            width = _pluckSize(attribs['width'], 'Width'),
-            N = attribs['stars'],
-            rating = attribs['rating'],
-            orientation = attribs['orientation'],
-            padding = _pluckSize(attribs['padding'], 'Padding'),
-            strokeWidth = _pluckSize(attribs['stroke-width'], 'Stroke Width'),
-            justifyContent = attribs['justify-content'],
-            alignItems = attribs['align-items'],
-            styles = {
-                "rated": attribs['rated'],
-                "nonrated": attribs['nonrated']
-            };
-        let validOrientation = ['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'],
-            validJustifyContent = ['center', 'space-evenly', 'start', 'end'],
-            validAlignItems = ['center', 'start', 'end'],
-            shouldContinue = true,
-            side, sideOut,
-            direction,
-            flow;
-
-        //check height and width
-        width = width.num ? width.num : this.config.width;
-        height = height.num ? height.num : this.config.height;
-        //[height, width] = this.elements.svg.update(height, width);
-
-        if (width < 20) {
-            console.error("Minimum width value is 20");
-            width = this.config.width;
-        }
-
-        if (height < 20) {
-            console.error("Minimum width value is 20");
-            height = this.config.height;
-        }
-
-        //[height, width] = this.elements.svg.update(height, width);
-
-        //check if number of stars => N is ok otherwise set the default value 5
-        if (!+N) {
-            N = this.config.TotalStars;
-        }
-        if (N <= 0) {
-            console.error("No of stars must be greater than 0");
-            shouldContinue = false;
-        }
-        //If N is fraction no issue because it used to limit loops only
-
-        //check if rating is given as number otherwise set the default value 5
-        if (!+rating && rating != 0) {
-            rating = this.config.rating;
-        }
-
-        if (rating && (rating > N || rating < 0)) {
-            console.error("Rating should be greater than 0 and less than No of stars");
-            shouldContinue = false;
-        }
-
-        //justify content
-        if (!validJustifyContent.includes(justifyContent)) {
-            if (justifyContent) {
-                console.error("Incorrect value for justify-content");
-            }
-            justifyContent = this.config.justifyContent;
-        }
-
-        //Align items
-        if (!validAlignItems.includes(alignItems)) {
-            if (alignItems) {
-                console.error("Incorrect value for align-items");
-            }
-            alignItems = this.config.alignItems;
-        }
-
-        //orientation
-        if (!validOrientation.includes(orientation)) {
-            if (orientation) {
-                console.error("Incorrect value for orientation");
-            }
-            orientation = this.config.orientation;
-        }
-
-        //internal variables to ease of control
-        direction = (orientation == 'left-to-right' || orientation == 'right-to-left') ? 'row' : 'column';
-        flow = (orientation == 'right-to-left' || orientation == 'bottom-to-top') ? 'reverse' : '';
-
-        //assign padding
-        if (!padding.num) {
-            if (attribs['padding']) {
-                console.error("Incorrect padding value");
-            }
-            padding = this.config.padding;
-        } else {
-            padding = padding.num;
-        }
-
-        if (padding < 1) {
-            console.error("Incorrect padding.");
-            padding = this.config.padding;
-        }
-
-        //assign stroke-width
-        if (!strokeWidth.num) {
-            if (attribs['stroke-width']) {
-                console.error("Incorrect stroke width value");
-            }
-            strokeWidth = this.config.strokeWidth;
-        } else {
-            strokeWidth = strokeWidth.num;
-        }
-
-
-        //validatind and adding styles
-        if (!styles['rated']) {
-            styles['rated'] = {};
-        }
-        if (!styles['nonrated']) {
-            styles['nonrated'] = {};
-        }
-
-        styles['rated']['fill'] = _validateColorCode(styles['rated']['fill']) ? styles['rated']['fill'] : this.config.ratedFill;
-        styles['rated']['stroke'] = _validateColorCode(styles['rated']['stroke']) ? styles['rated']['stroke'] : this.config.ratedStroke;
-
-        styles['nonrated']['fill'] = _validateColorCode(styles['nonrated']['fill']) ? styles['nonrated']['fill'] : this.config.nonratedFill;
-        styles['nonrated']['stroke'] = _validateColorCode(styles['nonrated']['stroke']) ? styles['nonrated']['stroke'] : this.config.nonratedStroke;
-
-        //Do calculation to check managable conditions
-        if (shouldContinue) {
-            sideOut = Math.min(direction == 'row' ? width / N : width, direction == 'column' ? height / N : height);
-            if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
-                console.error("Incorrect stroke-width");
-                strokeWidth = this.config.strokeWidth;
-            }
-            if (padding < 1 || padding > 0.10 * sideOut) {
-                console.error("Incorrect padding");
-                padding = this.config.padding;
-            }
-            side = sideOut - (padding * 2) - (strokeWidth * 2);
-            //console.log(sideOut, side, padding, strokeWidth);
-            if (sideOut < 16) {
-                console.error("Could not acomodate so many stars. Reduce no of stars");
-                shouldContinue = false;
-            }
-            if (side < 10) {
-                if (padding > 2) {
-                    console.error("Decrease padding.");
-                    padding = this.config.padding;
-                    side = sideOut - padding * 2 - strokeWidth * 2;
-                } else if (strokeWidth > (0.10 * sideOut)) {
-                    console.error("Decrease stroke-width.");
-                    strokeWidth = this.config.strokeWidth;
-                    side = sideOut - (padding * 2) - (strokeWidth * 2);
+        let correctValue, onValidate = {}, side, sideOut, strokeWidth, padding;
+        if (attribs.orientation !== undefined) {
+            if (['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'].includes(attribs.orientation) && correctValue !== this._config.orientation) {
+                this._config.orientation = attribs.orientation;
+                onValidate["_calculateSide"] = true;
+                attribs.direction = (attribs.orientation === 'top-to-bottom' || attribs.orientation === 'bottom-to-top') ? 'column' : 'row';
+                if (this._internalConfig.direction !== attribs.direction) {
+                    this._internalConfig.direction = direction;
+                    onValidate["_calculateSide"] = true;
                 }
-            }
-
-            //If still side is less than 10 set padding and stroke-width to 2 and 0
-            //console.log(side);
-            if (side < 10 && padding > 2) {
-                console.warn("Automatically setting padding to default");
-                padding = 2;
-                side = sideOut - (padding * 2) - (strokeWidth * 2);
-            }
-            if (side < 10 && strokeWidth > 0) {
-                console.warn("Automatically setting stroke-width to 0");
-                strokeWidth = 0;
-                side = sideOut - (padding * 2) - (strokeWidth * 2);
-            }
-
-            //If still side is less than 10 non-managable
-            if (side < 10) {
-                console.error("Non managable error. Try with different values");
-                shouldContinue = false;
+                this._internalConfig.flow = (attribs.orientation === 'left-to-right' || attribs.orientation === 'top-to-bottom') ? '' : 'reverse';
             }
         }
 
-        //check if it is non-managable condition
-        if (shouldContinue) {
-            this.config.height = height;
-            this.config.width = width;
-            this.config.orientation = orientation;
-            this.config.padding = padding;
-            this.config.rating = rating;
-            this.config.TotalStars = N;
-            this.config.ratedFill = styles['rated']['fill'];
-            this.config.ratedStroke = styles['rated']['stroke'];
-            this.config.nonratedFill = styles['nonrated']['fill'];
-            this.config.nonratedStroke = styles['nonrated']['stroke'];
-            this.config.strokeWidth = strokeWidth;
-
-            //Show a warning if stroke width is given but stroke-color is None as stroke is none show not visible
-            if (this.config.strokeWidth > 0) {
-                if (this.config.ratedStroke == 'none') {
-                    console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting rated stroke color as black");
-                    this.config.ratedStroke = '#000';
-                }
-                if (this.config.nonratedStroke == 'none') {
-                    console.warn("Provide stroke color along with stroke-width otherwise stroke not visible. setting nonrated stroke color as black");
-                    this.config.nonratedStroke = '#000';
-                }
+        if (attribs.height !== undefined) {
+            correctValue = _pluckSize(attribs.height);
+            if (correctValue && correctValue > 20 && correctValue !== this._config.height) {
+                this._config.height = correctValue;
+                onValidate["_calculateSide"] = true;
+                this._onDraw["_setSVGStyle"] = true;
             }
-
-            this.config.justifyContent = justifyContent;
-            this.config.alignItems = alignItems;
-            this._internalConfig.side = side;
-            this._internalConfig.sideOut = sideOut;
-            //extracted direction and flow from orientation
-            this._internalConfig.direction = direction;
-            this._internalConfig.flow = flow;
         }
-        // else {
-        //     this.elements.svg.update(this.config.height, this.config.width);
-        // }
-        return shouldContinue;
+
+        if (attribs.width !== undefined) {
+            correctValue = _pluckSize(attribs.width);
+            if (correctValue && correctValue > 20 && correctValue !== this._config.width) {
+                this._config.width = correctValue;
+                onValidate["_calculateSide"] = true;
+                this._onDraw["_setSVGStyle"] = true;
+            }
+        }
+
+        if (attribs.stars !== undefined) {
+            correctValue = +attribs.stars;
+            if (correctValue > 0 && correctValue !== this._config.TotalStars) {
+                this._config.TotalStars = correctValue;
+                onValidate['_calculateSide'] = true;
+            } else if (!correctValue) {
+                console.error("Incorrect value for stars: " + attribs.stars);
+            }
+        }
+
+        if (attribs.padding !== undefined) {
+            correctValue = _pluckSize(attribs.padding);
+            if (correctValue && correctValue > 20 && correctValue !== this._config.padding) {
+                padding = correctValue;
+                onValidate["_calculateSide"] = true;
+            }
+        }
+
+        if (attribs.strokeWidth !== undefined) {
+            correctValue = _pluckSize(attribs.strokeWidth);
+            if (correctValue && correctValue > 20 && correctValue !== this._config.strokeWidth) {
+                strokeWidth = correctValue;
+                onValidate["_calculateSide"] = true;
+                this._onDraw['_updateStarStyle'] = true;
+            }
+        }
+
+        if (attribs.rating !== undefined) {
+            correctValue = +attribs.rating; //using toFixed reduces performance so do it later
+            if (correctValue >= 0 && correctValue <= this._config.TotalStars && correctValue !== this._config.rating) {
+                this._config.rating = correctValue;
+                this._onDraw['_setDefinition'] = true;
+            } else if (!correctValue) {
+                console.log('Incorrect rating value: ' + attribs.rating);
+            }
+        }
+
+        if (attribs.justifyContent !== undefined) {
+            if (['start', 'end', 'center', 'space-evenly'].includes(attribs.justifyContent) && attribs.justifyContent !== this._config.justifyContent) {
+                this._config.justifyContent = attribs.justifyContent;
+                this._onDraw['_calculateBaseShift'] = true;
+            }
+        }
+
+        if (attribs.alignItems !== undefined) {
+            if (['start', 'end', 'center'].includes(attribs.alignItems) && attribs.alignItems !== this._config.alignItems) {
+                this._config.alignItems = attribs.alignItems;
+                this._onDraw['_calculateBaseShift'] = true;
+            }
+        }
+
+        if (attribs.ratedFill !== undefined) {
+            correctValue = _validateColorCode(attribs.ratedFill);
+            if (correctValue && correctValue !== this._config.ratedFill) {
+                this._config.ratedFill = correctValue;
+                this._onDraw['_updateStarStyle'] = true;
+                this._onDraw['_updateDefinitionFill'] = true;
+            } else if (!correctValue) {
+                console.error('Incorrect color for ratedFill: ' + attribs.ratedFill);
+            }
+        }
+
+
+        if (attribs.nonratedFill !== undefined) {
+            correctValue = _validateColorCode(attribs.nonratedFill);
+            if (correctValue && correctValue !== this._config.nonratedFill) {
+                this._config.nonratedFill = correctValue;
+                this._onDraw['_updateStarStyle'] = true;
+                this._onDraw['_updateDefinitionFill'] = true;
+            } else if (!correctValue) {
+                console.error('Incorrect color for ratedFill: ' + attribs.nonratedFill);
+            }
+        }
+
+
+        if (attribs.ratedStroke !== undefined) {
+            correctValue = _validateColorCode(attribs.ratedStroke);
+            if (correctValue && correctValue !== this._config.ratedStroke) {
+                this._config.ratedStroke = correctValue;
+                this._onDraw['_updateStarStyle'] = true;
+                this._onDraw['_updateDefinitionStroke'] = true;
+            } else if (!correctValue) {
+                console.error('Incorrect color for ratedFill: ' + attribs.ratedStroke);
+            }
+        }
+
+        if (attribs.nonratedStroke !== undefined) {
+            correctValue = _validateColorCode(attribs.nonratedStroke);
+            if (correctValue && correctValue !== this._config.nonratedStroke) {
+                this._config.nonratedStroke = correctValue;
+                this._onDraw['_updateStarStyle'] = true;
+                this._onDraw['_updateDefinitionStroke'] = true;
+            } else if (!correctValue) {
+                console.error('Incorrect color for ratedFill: ' + attribs.nonratedStroke);
+            }
+        }
+
+        if (onValidate._calculateSide) {
+            this._calculateSide(padding, strokeWidth);
+        }
+
+
+        return true;
     }
 
     /**
@@ -628,90 +664,54 @@ class StarRating {
     */
     _draw() {
         this._internalConfig.requestedAnimationFrame = false;
-        let i, j, baseY = 0, baseX = 0, xShift = 0, yShift = 0,
-            rating = !this.config.rating && this.config.rating != 0 ? this.config.TotalStars : this.config.rating,
-            currentStars = this.elements.stars.length,
-            relativePath = _getPathString(this._internalConfig.side);
+        if (typeof this.onPreDraw === 'function') {
+            this.onPreDraw();
+        } else if (this.onDraw) {
+            console.error('onDraw must be a function');
+        }
+        let i, j,
+            rating = !this._config.rating && this._config.rating != 0 ? this._config.TotalStars : this._config.rating,
+            currentStars = this._elements.stars.length;
 
+        this._internalConfig.relativePath = _getPathString(this._internalConfig.side);
         //update svg height and width
-        this.elements.svg.update(this.config.height, this.config.width);
+        this._elements.svg.update(this._config.height, this._config.width);
         //remove def if exist
-        let defs = this.elements.svg.getDefinition();
+        let defs = this._elements.svg.getDefinition();
 
         if (_isFraction(rating)) {
             //this._createGradientDefinitions(defs);
             if (!defs) {
-                defs = new Definition(this.elements.svg);
+                defs = new Definition(this._elements.svg);
             }
-            defs.update(rating, this.config.ratedFill, this.config.nonratedFill, this.config.ratedStroke, this.config.nonratedStroke, this._internalConfig.direction, this._internalConfig.flow);
+            defs.update(rating, this._config.ratedFill, this._config.nonratedFill, this._config.ratedStroke, this._config.nonratedStroke, this._internalConfig.direction, this._internalConfig.flow);
         }
 
-        if (this._internalConfig.direction == 'row') {
-            xShift = this._internalConfig.sideOut;
-            if (this.config.justifyContent == 'start') {
-                baseX = (this._internalConfig.sideOut / 2);
-            } else if (this.config.justifyContent == 'center') {
-                baseX = (this._internalConfig.sideOut / 2) + ((this.config.width - (this._internalConfig.sideOut * this.config.TotalStars)) / 2);
-            } else if (this.config.justifyContent == 'end') {
-                baseX = (this.config.width - (this._internalConfig.sideOut * this.config.TotalStars)) + (this._internalConfig.sideOut / 2);
-            } else if (this.config.justifyContent == 'space-evenly') {
-                xShift = this.config.width / this.config.TotalStars;
-                baseX = xShift / 2;
-                //console.log('space-evenly');
-            }
-            if (this.config.alignItems == 'center') {
-                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2) + ((this.config.height - this._internalConfig.sideOut) / 2);
-            } else if (this.config.alignItems == 'start') {
-                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
-            } else if (this.config.alignItems == 'end') {
-                baseY = (this.config.height - this._internalConfig.sideOut);
-            }
-        } else if (this._internalConfig.direction == 'column') {
-            yShift = this._internalConfig.sideOut;
-            if (this.config.justifyContent == 'start') {
-                baseY = (this._internalConfig.sideOut - this._internalConfig.side) / 2;
-            } else if (this.config.justifyContent == 'center') {
-                baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
-            } else if (this.config.justifyContent == 'end') {
-                baseY = (this.config.height - (this._internalConfig.sideOut * this.config.TotalStars));
-            } else if (this.config.justifyContent == 'space-evenly') {
-                yShift = this.config.height / this.config.TotalStars;
-                baseY = (yShift - this._internalConfig.side) / 2;
-            }
+        this._calculateBaseShift();
 
-            //console.log(this.alignItems);
-            if (this.config.alignItems == 'center') {
-                baseX = (this._internalConfig.sideOut / 2) + ((this.config.width - this._internalConfig.sideOut) / 2);
-            } else if (this.config.alignItems == 'start') {
-                baseX = this._internalConfig.sideOut / 2;
-            } else if (this.config.alignItems == 'end') {
-                baseX = this.config.width - (this._internalConfig.sideOut / 2);
-            }
-        }
-
-        for (i = 0; i < Math.max(currentStars, this.config.TotalStars); i++) {
-            j = this._internalConfig.flow == 'reverse' ? this.config.TotalStars - i - 1 : i;
+        for (i = 0; i < Math.max(currentStars, this._config.TotalStars); i++) {
+            j = this._internalConfig.flow == 'reverse' ? this._config.TotalStars - i - 1 : i;
             if (i >= currentStars) {
                 let star = new SVGElement("path");
-                this.elements.stars.push(star);
-                this.elements.svg.appendChild(star);
-            } else if (i >= this.config.TotalStars) {
-                this.elements.stars.pop().removeNode();
+                this._elements.stars.push(star);
+                this._elements.svg.appendChild(star);
+            } else if (i >= this._config.TotalStars) {
+                this._elements.stars.pop().removeNode();
             }
-            if (i < this.config.TotalStars) {
+            if (i < this._config.TotalStars) {
                 if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
-                    this.elements.stars[i].setAttributes({
+                    this._elements.stars[i].setAttributes({
                         "fill": "url(#partial-fill)",
                         "stroke": "url(#partial-stroke)",
-                        "stroke-width": this.config.strokeWidth + "px",
-                        "d": 'M' + (baseX + (xShift * i)) + ',' + (baseY + (yShift * i)) + ' ' + relativePath
+                        "stroke-width": this._config.strokeWidth + "px",
+                        "d": 'M' + (this._internalConfig.baseX + (this._internalConfig.xShift * i)) + ',' + (this._internalConfig.baseY + (this._internalConfig.yShift * i)) + ' ' + this._internalConfig.relativePath
                     });
                 } else {
-                    this.elements.stars[i].setAttributes({
-                        "fill": j < Math.ceil(rating) ? this.config.ratedFill : this.config.nonratedFill,
-                        "stroke": j < Math.ceil(rating) ? this.config.ratedStroke : this.config.nonratedStroke,
-                        "stroke-width": this.config.strokeWidth + "px",
-                        "d": 'M' + (baseX + (xShift * i)) + ',' + (baseY + (yShift * i)) + ' ' + relativePath
+                    this._elements.stars[i].setAttributes({
+                        "fill": j < Math.ceil(rating) ? this._config.ratedFill : this._config.nonratedFill,
+                        "stroke": j < Math.ceil(rating) ? this._config.ratedStroke : this._config.nonratedStroke,
+                        "stroke-width": this._config.strokeWidth + "px",
+                        "d": 'M' + (this._internalConfig.baseX + (this._internalConfig.xShift * i)) + ',' + (this._internalConfig.baseY + (this._internalConfig.yShift * i)) + ' ' + this._internalConfig.relativePath
                     });
                 }
             }
@@ -749,7 +749,7 @@ class StarRating {
             }
         }
         if (typeof this.onUpdate === 'function') {
-            this.onUpdate(this.config);
+            this.onUpdate(this._config);
         } else if (this.onUpdate) {
             console.error('onUpdate must be a function');
         }

@@ -333,12 +333,8 @@ ratingStory.addChapter(
       "width": 1200,
       "height": 600,
       "stroke-width": '5',
-      "rated": {
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "stroke": "#ff0"
-      }
+      "ratedStroke": "#000",
+      "nonratedStroke": "#ff0"
     });
   },
   [
@@ -353,12 +349,8 @@ ratingStory.addChapter(
       "width": 1200,
       "height": 600,
       "stroke-width": '100',
-      "rated": {
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "stroke": "#ff0"
-      }
+      "ratedStroke": "#000",
+      "nonratedStroke": "#ff0"
     });
   },
   [
@@ -373,14 +365,10 @@ ratingStory.addChapter(
       "width": 1200,
       "height": 600,
       "stroke-width": -5,
-      "rated": {
-        "fill": "#ff0",
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "fill": "#fff",
-        "stroke": "#ff0"
-      }
+      "ratedFill": "#ff0",
+      "ratedStroke": "#000",
+      "nonratedFill": "#fff",
+      "nonratedStroke": "#ff0"
     });
   },
   [
@@ -395,28 +383,20 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "width": 1200,
       "height": 600,
-      "rated": {
-        "fill": "#f00",
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "fill": "#ddd",
-        "stroke": "#ff0"
-      }
+      "ratedFill": "#f00",
+      "ratedStroke": "#000",
+      "nonratedFill": "#ddd",
+      "nonratedStroke": "#ff0"
     });
 
     setTimeout(function () {
       rating.update({
         "rating": 10.2,
         "stars": 5,
-        "rated": {
-          "fill": "#000",
-          "stroke": "#f00"
-        },
-        "nonrated": {
-          "fill": "#ddd",
-          "stroke": "#ff0"
-        }
+        "ratedFill": "#000",
+        "ratedStroke": "#f00",
+        "nonratedFill": "#ddd",
+        "nonratedStroke": "#ff0"
       });
 
       setTimeout(function () {
@@ -516,12 +496,12 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'StarRating orientation top-to-bottom align-items start',
+  'StarRating orientation top-to-bottom alignItems start',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
       "orientation": "top-to-bottom",
-      "align-items": "start"
+      "alignItems": "start"
     });
   },
   [
@@ -531,24 +511,24 @@ ratingStory.addChapter(
 
 
 ratingStory.addChapter(
-  'StarRating orientation top-to-bottom align-items end then updating to R2L-end and then R2L-start',
+  'StarRating orientation top-to-bottom alignItems end then updating to R2L-end and then R2L-start',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
       "orientation": "top-to-bottom",
-      "align-items": "end"
+      "alignItems": "end"
     });
 
     setTimeout(function () {
       rating.update({
         "orientation": "right-to-left",
-        "align-items": "end"
+        "alignItems": "end"
       });
 
       setTimeout(function () {
         rating.update({
           "orientation": "right-to-left",
-          "align-items": "start"
+          "alignItems": "start"
         })
       }, 3000);
     }, 3000);
@@ -558,32 +538,30 @@ ratingStory.addChapter(
   ]
 )
 
-ratingStory.addChapter(
-  'StarRating with empty styles inside rated and unrated',
-  story => {
-    let rating = new StarRating(story, {
-      "rating": 4.5,
-      "rated": {
+// ratingStory.addChapter(
+//   'StarRating with empty styles inside rated and unrated',
+//   story => {
+//     let rating = new StarRating(story, {
+//       "rating": 4.5,
+//       "rated": {
 
-      },
-      "nonrated": {
+//       },
+//       "nonrated": {
 
-      }
-    });
-  },
-  [
-    notes('Should visualize 4.5/5 with default')
-  ]
-)
+//       }
+//     });
+//   },
+//   [
+//     notes('Should visualize 4.5/5 with default')
+//   ]
+// )
 
 ratingStory.addChapter(
   'StarRating fill red hex code',
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
-      "rated": {
-        "fill": "#f00"
-      }
+      "ratedFill": "#f00"
     });
   },
   [
@@ -596,9 +574,7 @@ ratingStory.addChapter(
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
-      "rated": {
-        "fill": "rgb(255,0,0)"
-      }
+      "ratedFill": "rgb(255,0,0)"
     });
   },
   [
@@ -611,15 +587,11 @@ ratingStory.addChapter(
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
-      "rated": {
-        "fill": "rgb(xyz,0,0)"
-      }
+      "ratedFill": "rgb(xyz,0,0)"
     });
     setTimeout(function () {
       rating.update({
-        "rated": {
-          "fill": "blue"
-        }
+        "ratedFill": "blue"
       });
     }, 3000);
   },
@@ -633,9 +605,7 @@ ratingStory.addChapter(
   story => {
     let rating = new StarRating(story, {
       "rating": 4.5,
-      "nonrated": {
-        "fill": "#00f"
-      }
+      "nonratedFill": "#00f"
     });
   },
   [
@@ -647,7 +617,7 @@ ratingStory.addChapter(
   'Justify content space-evenly',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "space-evenly",
+      "justifyContent": "space-evenly",
       "height": 100,
       "width": 1200
     });
@@ -661,7 +631,7 @@ ratingStory.addChapter(
   'Justify content center',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "center",
+      "justifyContent": "center",
       "height": 100,
       "width": 1200
     });
@@ -675,7 +645,7 @@ ratingStory.addChapter(
   'Justify content start',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "start",
+      "justifyContent": "start",
       "height": 100,
       "width": 1200
     });
@@ -689,7 +659,7 @@ ratingStory.addChapter(
   'Justify content end',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "end",
+      "justifyContent": "end",
       "height": 100,
       "width": 1200
     });
@@ -703,7 +673,7 @@ ratingStory.addChapter(
   'Justify content space-evenly with orientation bottom-to-top',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "space-evenly",
+      "justifyContent": "space-evenly",
       "orientation": "bottom-to-top",
       "height": 1200,
       "width": 100
@@ -718,7 +688,7 @@ ratingStory.addChapter(
   'Justify content end with orientation top-to-bottom',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "end",
+      "justifyContent": "end",
       "orientation": "top-to-bottom",
       "height": 1200,
       "width": 100
@@ -733,7 +703,7 @@ ratingStory.addChapter(
   'padding of 5',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "center",
+      "justifyContent": "center",
       "height": 100,
       "width": 1200,
       "padding": 5
@@ -748,7 +718,7 @@ ratingStory.addChapter(
   'padding < 1 or negative',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "center",
+      "justifyContent": "center",
       "height": 100,
       "width": 1200,
       "padding": 0
@@ -764,7 +734,7 @@ ratingStory.addChapter(
   'large padding',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "center",
+      "justifyContent": "center",
       "height": 100,
       "width": 1200,
       "padding": 100
@@ -780,21 +750,17 @@ ratingStory.addChapter(
   'All attributes are provided and valid',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "space-evenly",
+      "justifyContent": "space-evenly",
       "orientation": "top-to-bottom",
-      "align-items": "center",
+      "alignItems": "center",
       "height": 1200,
       "width": 100,
       "padding": 4,
       "stroke-width": 5,
-      "rated": {
-        "fill": "#f00",
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "fill": "#00f",
-        "stroke": "#f00"
-      },
+      "ratedFill": "#f00",
+      "ratedStroke": "#000",
+      "nonratedFill": "#00f",
+      "nonratedStroke": "#f00",
       "rating": 8.6,
       "stars": 10
     });
@@ -809,21 +775,17 @@ ratingStory.addChapter(
   'Check prettyness when stroke width and padding is at highest limit',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "space-evenly",
+      "justifyContent": "space-evenly",
       "orientation": "top-to-bottom",
-      "align-items": "end",
+      "alignItems": "end",
       "height": 1200,
       "width": 100,
       "padding": 10,
       "stroke-width": 10,
-      "rated": {
-        "fill": "#f00",
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "fill": "#00f",
-        "stroke": "#f00"
-      },
+      "ratedFill": "#f00",
+      "ratedStroke": "#000",
+      "nonratedFill": "#00f",
+      "nonratedStroke": "#f00",
       "rating": 8.6,
       "stars": 10
     });
@@ -838,21 +800,17 @@ ratingStory.addChapter(
   'Check all garbage values except rating and stars',
   story => {
     let rating = new StarRating(story, {
-      "justify-content": "garbage",
+      "justifyContent": "garbage",
       "orientation": "garbage",
-      "align-items": "garbage",
+      "alignItems": "garbage",
       "height": "garbage",
       "width": "garbage",
       "padding": "garbage",
       "stroke-width": "ddd",
-      "rated": {
-        "fill": "#garbage",
-        "stroke": "#garbage"
-      },
-      "nonrated": {
-        "fill": "#garbage",
-        "stroke": "#garbage"
-      },
+      "ratedFill": "#garbage",
+      "ratedStroke": "#garbage",
+      "nonratedFill": "#garbage",
+      "nonratedStroke": "#garbage",
       "rating": 1.45,
       "stars": 3
     });
@@ -870,12 +828,8 @@ ratingStory.addChapter(
       "stars": 5,
       "stroke-width": 5,
       "padding": 5,
-      "rated": {
-        "stroke": "#000"
-      },
-      "nonrated": {
-        "stroke": "#aaa"
-      }
+      "ratedStroke": "#000",
+      "nonratedStroke": "#aaa"
     });
     setTimeout(function () {
       rating.update({
@@ -906,6 +860,8 @@ ratingStory.addChapter(
       time = ((new Date()).getTime() * 1) - startTime;
       T++;
     }
+
+    window.x = rating;
     console.log(T + ' tests in ' + time + 'ms');
   },
   [
@@ -921,17 +877,55 @@ ratingStory.addChapter(
       "rating": 4.5,
       "stars": 5
     }),
-      T = 1, startTime = ((new Date()).getTime() * 1), time = 0;
+      T = 1, startTime = ((new Date()).getTime() * 1), time = 0, colors = ['#ff0', '#f00', '#0f0', '#000'];
     while (time < 100) {
       rating.update({
-        "width": 400 + T * 100,
-        "rating": 4.5 + T,
-        "stars": 5 + T,
+        "width": 400 + ((T * 100) % 400),
+        "height": 400 + ((T * 100) % 400),
+        "rating": ((4.5 + T) % 10) + 1,
+        "stars": ((5 + T) % 10) + 1,
+        "ratedFill": colors[T % 4]
       });
       time = ((new Date()).getTime() * 1) - startTime;
       T++;
     }
     console.log(T + ' tests in ' + time + 'ms');
+  },
+  [
+    notes('Should visualize rating update and log no of tests done in 100ms')
+  ]
+)
+
+//STRESS TESTING
+ratingStory.addChapter(
+  'Stress Testing on layout update',
+  story => {
+    let rating = new StarRating(story, {
+      "rating": 4.5,
+      "stars": 5
+    }),
+      T = 1, startTime, time = 0, colors = ['#ff0', '#f00', '#0f0', '#000'], calledDraw = 0;
+    rating.onPreDraw = function () {
+      startTime = ((new Date()).getTime() * 1);
+    }
+    rating.onDraw = function () {
+      calledDraw++;
+      time += ((new Date()).getTime() * 1) - startTime;
+    }
+
+    setTimeout(function () {
+      while (T < 100) {
+        rating.update({
+          "width": 400 + ((T * 100) % 400),
+          "height": 400 + ((T * 100) % 400),
+          "rating": ((4.5 + T) % 10) + 1,
+          "stars": ((5 + T) % 10) + 1,
+          "ratedFill": colors[T % 4]
+        });
+        T++;
+      }
+      console.log(T + ' tests. Draw called ' + calledDraw + 'time(s) in ' + time + 'ms');
+    }, 3000);
   },
   [
     notes('Should visualize rating update and log no of tests done in 100ms')
