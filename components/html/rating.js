@@ -38,17 +38,6 @@ function _pluckSize(size, str) {
     return null;
 }
 
-function _pluckNumber(num, precision = 0) {
-    if (num) {
-        if (!+num && +num !== 0) {
-            console.error("Incorrect value: " + num);
-        } else {
-            return (+num).toFixed(precision);
-        }
-    }
-    return null;
-}
-
 /**
   * Validate color if color is in hexcode or rgb otherwise.
   * Used to check if the given fill / stroke color code is valid
@@ -219,9 +208,7 @@ class Definition {
     update(rating, ratedFill, nonratedFill, ratedStroke, nonratedStroke, direction, flow) {
         let ratingFraction = (rating - Math.floor(rating)).toFixed(2),
             commonLinearGradient = {
-                "x1": "0%",
                 "x2": direction == 'row' ? "100%" : "0%",
-                "y1": "0%",
                 "y2": direction == 'column' ? "100%" : "0%"
             };
         if (ratingFraction === this._config.ratingFraction && this._config.ratedFill === ratedFill && this._config.nonratedFill === nonratedFill && this._config.ratedStroke === ratedStroke && this._config.direction === direction && this._config.flow === flow) {
@@ -334,13 +321,12 @@ class StarRating {
             return null;
         }
 
-        this._elements = {};
+        this._elem = {};
         this._config = {};
         this._internalConfig = {};
         this._onDraw = {};
-        this._drawnState = {};
-        this._onDefinition = [];
-        this._elements.parentElement = parentElement;
+        this._internalConfig.firstDraw = true;
+        this._elem.parentElement = parentElement;
 
         //setting defaults
         this._config.height = 400;
@@ -373,8 +359,8 @@ class StarRating {
         //usefull internally
         this._internalConfig.direction = 'row';
         this._internalConfig.flow = '';
-        this._elements.svg = new SVGContainer(parentElement, this._config.height, this._config.width);
-        this._elements.stars = [];
+        this._elem.svg = new SVGContainer(parentElement, this._config.height, this._config.width);
+        this._elem.stars = [];
 
         if (attribs) {
             if (this._validateAndSet(attribs)) {
@@ -384,7 +370,7 @@ class StarRating {
                     this._draw();
                 });
             } else {
-                this._elements.svg.removeNode();
+                this._elem.svg.removeNode();
                 console.error("Stopping execution");
                 return null;
             }
@@ -432,47 +418,53 @@ class StarRating {
     }
 
     _calculateBaseShift(){
-        let xShift = 0, yShift = 0, baseX = 0, baseY = 0;
-        if (this._onDraw._calculateBaseShift) {
+        let xShift = 0, yShift = 0, baseX = 0, baseY = 0,
+        justifyContent = this._config.justifyContent,
+        alignItems = this._config.alignItems,
+        side = this._internalConfig.side,
+        sideOut = this._internalConfig.sideOut,
+        height = this._config.height,
+        width = this._config.width,
+        TotalStars = this._config.TotalStars;
             if (this._internalConfig.direction == 'row') {
-                xShift = this._internalConfig.sideOut;
-                if (this._config.justifyContent == 'start') {
-                    baseX = (this._internalConfig.sideOut / 2);
-                } else if (this._config.justifyContent == 'center') {
-                    baseX = (this._internalConfig.sideOut / 2) + ((this._config.width - (this._internalConfig.sideOut * this._config.TotalStars)) / 2);
-                } else if (this._config.justifyContent == 'end') {
-                    baseX = (this._config.width - (this._internalConfig.sideOut * this._config.TotalStars)) + (this._internalConfig.sideOut / 2);
-                } else if (this._config.justifyContent == 'space-evenly') {
-                    xShift = this._config.width / this._config.TotalStars;
+                xShift = sideOut;
+                if (justifyContent == 'start') {
+                    baseX = (sideOut / 2);
+                } else if (justifyContent == 'center') {
+                    baseX = (sideOut / 2) + ((width - (sideOut * TotalStars)) / 2);
+                } else if (justifyContent == 'end') {
+                    baseX = (width - (sideOut * TotalStars)) + (sideOut / 2);
+                } else if (justifyContent == 'space-evenly') {
+                    xShift = width / TotalStars;
                     baseX = xShift / 2;
                 }
-                if (this._config.alignItems == 'center') {
-                    baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2) + ((this._config.height - this._internalConfig.sideOut) / 2);
-                } else if (this._config.alignItems == 'start') {
-                    baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
-                } else if (this._config.alignItems == 'end') {
-                    baseY = (this._config.height - this._internalConfig.sideOut);
+                if (alignItems == 'center') {
+                    baseY = ((sideOut - side) / 2) + ((height - sideOut) / 2);
+                } else if (alignItems == 'start') {
+                    baseY = ((sideOut - side) / 2);
+                } else if (alignItems == 'end') {
+                    baseY = (height - sideOut);
                 }
             } else if (this._internalConfig.direction == 'column') {
-                yShift = this._internalConfig.sideOut;
-                if (this._config.justifyContent == 'start') {
-                    baseY = (this._internalConfig.sideOut - this._internalConfig.side) / 2;
-                } else if (this._config.justifyContent == 'center') {
-                    baseY = ((this._internalConfig.sideOut - this._internalConfig.side) / 2);
-                } else if (this._config.justifyContent == 'end') {
-                    baseY = (this._config.height - (this._internalConfig.sideOut * this._config.TotalStars));
-                } else if (this._config.justifyContent == 'space-evenly') {
-                    yShift = this._config.height / this._config.TotalStars;
-                    baseY = (yShift - this._internalConfig.side) / 2;
+                yShift = sideOut;
+                if (justifyContent == 'start') {
+                    baseY = (sideOut - side) / 2;
+                } else if (justifyContent == 'center') {
+                    baseY = ((sideOut - side) / 2);
+                } else if (justifyContent == 'end') {
+                    baseY = (height - (sideOut * TotalStars));
+                } else if (justifyContent == 'space-evenly') {
+                    yShift = height / TotalStars;
+                    baseY = (yShift - side) / 2;
                 }
 
                 //console.log(this.alignItems);
-                if (this._config.alignItems == 'center') {
-                    baseX = (this._internalConfig.sideOut / 2) + ((this._config.width - this._internalConfig.sideOut) / 2);
-                } else if (this._config.alignItems == 'start') {
-                    baseX = this._internalConfig.sideOut / 2;
-                } else if (this._config.alignItems == 'end') {
-                    baseX = this._config.width - (this._internalConfig.sideOut / 2);
+                if (alignItems == 'center') {
+                    baseX = (sideOut / 2) + ((width - sideOut) / 2);
+                } else if (alignItems == 'start') {
+                    baseX = sideOut / 2;
+                } else if (alignItems == 'end') {
+                    baseX = width - (sideOut / 2);
                 }
             }
             if (this._internalConfig.baseX !== baseX) {
@@ -491,7 +483,6 @@ class StarRating {
                 this._internalConfig.yShift = yShift;
             }
             this._onDraw['_reassignPath'] = true;
-        }
     }
 
     /**
@@ -512,60 +503,64 @@ class StarRating {
     *          
     */
     _validateAndSet(attribs) {
-        let correctValue, onValidate = {}, side, sideOut, strokeWidth, padding;
+        let cVal, calcSide, strokeWidth, padding;
         if (attribs.orientation !== undefined) {
-            if (['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'].includes(attribs.orientation) && correctValue !== this._config.orientation) {
+            if (['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'].includes(attribs.orientation) && cVal !== this._config.orientation) {
                 this._config.orientation = attribs.orientation;
                 attribs.direction = (attribs.orientation === 'top-to-bottom' || attribs.orientation === 'bottom-to-top') ? 'column' : 'row';
                 if (this._internalConfig.direction !== attribs.direction) {
-                    this._internalConfig.direction = direction;
+                    this._internalConfig.direction = attribs.direction;
+                    calcSide = true;
                 }
                 this._internalConfig.flow = (attribs.orientation === 'left-to-right' || attribs.orientation === 'top-to-bottom') ? '' : 'reverse';
             }
         }
 
         if (attribs.height !== undefined) {
-            correctValue = _pluckSize(attribs.height);
-            if (correctValue && correctValue >= 20 && correctValue !== this._config.height) {
-                this._config.height = correctValue;
+            cVal = _pluckSize(attribs.height);
+            if (cVal && cVal >= 20 && cVal !== this._config.height) {
+                this._config.height = cVal;
+                calcSide = true;
             }
         }
 
         if (attribs.width !== undefined) {
-            correctValue = _pluckSize(attribs.width);
-            if (correctValue && correctValue >= 20 && correctValue !== this._config.width) {
-                this._config.width = correctValue;
+            cVal = _pluckSize(attribs.width);
+            if (cVal && cVal >= 20 && cVal !== this._config.width) {
+                this._config.width = cVal;
+                calcSide = true;
             }
         }
 
         if (attribs.stars !== undefined) {
-            correctValue = +attribs.stars;
-            if (correctValue > 0 && correctValue !== this._config.TotalStars) {
-                this._config.TotalStars = correctValue;
-            } else if (!correctValue) {
+            cVal = +attribs.stars;
+            if (cVal > 0 && cVal !== this._config.TotalStars) {
+                this._config.TotalStars = cVal;
+                calcSide = true;
+            } else if (!cVal) {
                 console.error("Incorrect value for stars: " + attribs.stars);
             }
         }
 
         if (attribs.padding !== undefined) {
-            correctValue = _pluckSize(attribs.padding);
-            if (correctValue && correctValue !== this._config.padding) {
-                padding = correctValue;
+            cVal = _pluckSize(attribs.padding);
+            if (cVal && cVal !== this._config.padding) {
+                padding = cVal;
             }
         }
 
         if (attribs.strokeWidth !== undefined) {
-            correctValue = _pluckSize(attribs.strokeWidth);
-            if (correctValue && correctValue !== this._config.strokeWidth) {
-                strokeWidth = correctValue;
+            cVal = _pluckSize(attribs.strokeWidth);
+            if (cVal && cVal !== this._config.strokeWidth) {
+                strokeWidth = cVal;
             }
         }
 
         if (attribs.rating !== undefined) {
-            correctValue = +attribs.rating; //using toFixed reduces performance so do it later
-            if (correctValue >= 0 && correctValue <= this._config.TotalStars && correctValue !== this._config.rating) {
-                this._config.rating = correctValue;
-            } else if (!correctValue) {
+            cVal = +attribs.rating; //using toFixed reduces performance so do it later
+            if (cVal >= 0 && cVal <= this._config.TotalStars && cVal !== this._config.rating) {
+                this._config.rating = cVal;
+            } else if (!cVal) {
                 console.log('Incorrect rating value: ' + attribs.rating);
             }
         }
@@ -583,44 +578,44 @@ class StarRating {
         }
 
         if (attribs.ratedFill !== undefined) {
-            correctValue = _validateColorCode(attribs.ratedFill);
-            if (correctValue && correctValue !== this._config.ratedFill) {
-                this._config.ratedFill = correctValue;
-            } else if (!correctValue) {
+            cVal = _validateColorCode(attribs.ratedFill);
+            if (cVal && cVal !== this._config.ratedFill) {
+                this._config.ratedFill = cVal;
+            } else if (!cVal) {
                 console.error('Incorrect color for ratedFill: ' + attribs.ratedFill);
             }
         }
 
 
         if (attribs.nonratedFill !== undefined) {
-            correctValue = _validateColorCode(attribs.nonratedFill);
-            if (correctValue && correctValue !== this._config.nonratedFill) {
-                this._config.nonratedFill = correctValue;
-            } else if (!correctValue) {
+            cVal = _validateColorCode(attribs.nonratedFill);
+            if (cVal && cVal !== this._config.nonratedFill) {
+                this._config.nonratedFill = cVal;
+            } else if (!cVal) {
                 console.error('Incorrect color for ratedFill: ' + attribs.nonratedFill);
             }
         }
 
 
         if (attribs.ratedStroke !== undefined) {
-            correctValue = _validateColorCode(attribs.ratedStroke);
-            if (correctValue && correctValue !== this._config.ratedStroke) {
-                this._config.ratedStroke = correctValue;
-            } else if (!correctValue) {
+            cVal = _validateColorCode(attribs.ratedStroke);
+            if (cVal && cVal !== this._config.ratedStroke) {
+                this._config.ratedStroke = cVal;
+            } else if (!cVal) {
                 console.error('Incorrect color for ratedFill: ' + attribs.ratedStroke);
             }
         }
 
         if (attribs.nonratedStroke !== undefined) {
-            correctValue = _validateColorCode(attribs.nonratedStroke);
-            if (correctValue && correctValue !== this._config.nonratedStroke) {
-                this._config.nonratedStroke = correctValue;
-            } else if (!correctValue) {
+            cVal = _validateColorCode(attribs.nonratedStroke);
+            if (cVal && cVal !== this._config.nonratedStroke) {
+                this._config.nonratedStroke = cVal;
+            } else if (!cVal) {
                 console.error('Incorrect color for ratedFill: ' + attribs.nonratedStroke);
             }
         }
 
-        if (onValidate._calculateSide) {
+        if (calcSide) {
             this._calculateSide(padding, strokeWidth);
         }
 
@@ -646,18 +641,18 @@ class StarRating {
         }
         let i, j,
             rating = !this._config.rating && this._config.rating != 0 ? this._config.TotalStars : this._config.rating,
-            currentStars = this._elements.stars.length;
+            currentStars = this._elem.stars.length;
 
         this._internalConfig.relativePath = _getPathString(this._internalConfig.side);
         //update svg height and width
-        this._elements.svg.update(this._config.height, this._config.width);
+        this._elem.svg.update(this._config.height, this._config.width);
         //remove def if exist
-        let defs = this._elements.svg.getDefinition();
+        let defs = this._elem.svg.getDefinition();
 
         if (_isFraction(rating)) {
             //this._createGradientDefinitions(defs);
             if (!defs) {
-                defs = new Definition(this._elements.svg);
+                defs = new Definition(this._elem.svg);
             }
             defs.update(rating, this._config.ratedFill, this._config.nonratedFill, this._config.ratedStroke, this._config.nonratedStroke, this._internalConfig.direction, this._internalConfig.flow);
         }
@@ -668,21 +663,21 @@ class StarRating {
             j = this._internalConfig.flow == 'reverse' ? this._config.TotalStars - i - 1 : i;
             if (i >= currentStars) {
                 let star = new SVGElement("path");
-                this._elements.stars.push(star);
-                this._elements.svg.appendChild(star);
+                this._elem.stars.push(star);
+                this._elem.svg.appendChild(star);
             } else if (i >= this._config.TotalStars) {
-                this._elements.stars.pop().removeNode();
+                this._elem.stars.pop().removeNode();
             }
             if (i < this._config.TotalStars) {
                 if (_isFraction(rating) && Math.ceil(rating) == j + 1) {
-                    this._elements.stars[i].setAttributes({
+                    this._elem.stars[i].setAttributes({
                         "fill": "url(#partial-fill)",
                         "stroke": "url(#partial-stroke)",
                         "stroke-width": this._config.strokeWidth + "px",
                         "d": 'M' + (this._internalConfig.baseX + (this._internalConfig.xShift * i)) + ',' + (this._internalConfig.baseY + (this._internalConfig.yShift * i)) + ' ' + this._internalConfig.relativePath
                     });
                 } else {
-                    this._elements.stars[i].setAttributes({
+                    this._elem.stars[i].setAttributes({
                         "fill": j < Math.ceil(rating) ? this._config.ratedFill : this._config.nonratedFill,
                         "stroke": j < Math.ceil(rating) ? this._config.ratedStroke : this._config.nonratedStroke,
                         "stroke-width": this._config.strokeWidth + "px",
@@ -696,6 +691,7 @@ class StarRating {
         } else if (this.onDraw) {
             console.error('onDraw must be a function');
         }
+        this._internalConfig.firstDraw = false;
     }
 
     /**

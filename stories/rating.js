@@ -311,18 +311,18 @@ ratingStory.addChapter(
 
 //CONFUSING TO USER
 ratingStory.addChapter(
-  'Check stroke-width attribute without style attributes',
+  'Check strokeWidth attribute without style attributes',
   story => {
     let rating = new StarRating(story, {
       "width": 1200,
       "height": 600,
-      "stroke-width": '5',
+      "strokeWidth": '5',
       'rating': 8.8,
       'stars': 9
     });
   },
   [
-    notes('It should visualize 8.8/9 rating stroke-width: 5px with default styles i.e stroke color none(not visible) so give a warning')
+    notes('It should visualize 8.8/9 rating strokeWidth: 5px with default styles i.e stroke color none(not visible) so give a warning')
   ]
 )
 
@@ -332,13 +332,13 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "width": 1200,
       "height": 600,
-      "stroke-width": '5',
+      "strokeWidth": '5',
       "ratedStroke": "#000",
       "nonratedStroke": "#ff0"
     });
   },
   [
-    notes('It should visualize 5/5 rating stroke-width: 5px with combined-styles as-> rated: yellow-black, nonrated: grey-red')
+    notes('It should visualize 5/5 rating strokeWidth: 5px with combined-styles as-> rated: yellow-black, nonrated: grey-red')
   ]
 )
 
@@ -348,7 +348,7 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "width": 1200,
       "height": 600,
-      "stroke-width": '100',
+      "strokeWidth": '100',
       "ratedStroke": "#000",
       "nonratedStroke": "#ff0"
     });
@@ -359,12 +359,12 @@ ratingStory.addChapter(
 )
 
 ratingStory.addChapter(
-  'Check stroke-width in negative',
+  'Check strokeWidth in negative',
   story => {
     let rating = new StarRating(story, {
       "width": 1200,
       "height": 600,
-      "stroke-width": -5,
+      "strokeWidth": -5,
       "ratedFill": "#ff0",
       "ratedStroke": "#000",
       "nonratedFill": "#fff",
@@ -372,7 +372,7 @@ ratingStory.addChapter(
     });
   },
   [
-    notes('It should visualize 5/5 rating skipping stroke-width: -5 and raise an error notifying nagative stroke width')
+    notes('It should visualize 5/5 rating skipping strokeWidth: -5 and raise an error notifying nagative stroke width')
   ]
 )
 
@@ -756,7 +756,7 @@ ratingStory.addChapter(
       "height": 1200,
       "width": 100,
       "padding": 4,
-      "stroke-width": 5,
+      "strokeWidth": 5,
       "ratedFill": "#f00",
       "ratedStroke": "#000",
       "nonratedFill": "#00f",
@@ -781,7 +781,7 @@ ratingStory.addChapter(
       "height": 1200,
       "width": 100,
       "padding": 10,
-      "stroke-width": 10,
+      "strokeWidth": 10,
       "ratedFill": "#f00",
       "ratedStroke": "#000",
       "nonratedFill": "#00f",
@@ -806,7 +806,7 @@ ratingStory.addChapter(
       "height": "garbage",
       "width": "garbage",
       "padding": "garbage",
-      "stroke-width": "ddd",
+      "strokeWidth": "ddd",
       "ratedFill": "#garbage",
       "ratedStroke": "#garbage",
       "nonratedFill": "#garbage",
@@ -826,7 +826,7 @@ ratingStory.addChapter(
     let rating = new StarRating(story, {
       "rating": 4.5,
       "stars": 5,
-      "stroke-width": 5,
+      "strokeWidth": 5,
       "padding": 5,
       "ratedStroke": "#000",
       "nonratedStroke": "#aaa"
