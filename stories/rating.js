@@ -288,7 +288,7 @@ ratingStory.addChapter(
 
 //IMPORTANT
 ratingStory.addChapter(
-  'On update prevention check other attributes changes',
+  'Check rating > no of stars',
   story => {
     let rating = new StarRating(story, {
       "width": 1200,
@@ -300,12 +300,12 @@ ratingStory.addChapter(
         "width": 1400,
         "height": 600,
         "rating": 10.2,
-        "stars": 5
+        "stars": 10
       })
     }, 3000);
   },
   [
-    notes('First it should visualize 5/5 rating then raise error after 3s but do not update width and height')
+    notes('First it should visualize 5/5 rating then raise error after update width, height and rating 10/10')
   ]
 )
 
@@ -882,7 +882,7 @@ ratingStory.addChapter(
       rating.update({
         "width": 400 + ((T * 100) % 400),
         "height": 400 + ((T * 100) % 400),
-        "rating": ((4.5 + T) % 10) + 1,
+        "rating": (((4.5 + T) % 10) + 1) % (((5 + T) % 10) + 1),
         "stars": ((5 + T) % 10) + 1,
         "ratedFill": colors[T % 4]
       });
@@ -918,7 +918,7 @@ ratingStory.addChapter(
         rating.update({
           "width": 400 + ((T * 100) % 400),
           "height": 400 + ((T * 100) % 400),
-          "rating": ((4.5 + T) % 10) + 1,
+          "rating": (((4.5 + T) % 10) + 1) % (((5 + T) % 10) + 1),
           "stars": ((5 + T) % 10) + 1,
           "ratedFill": colors[T % 4]
         });

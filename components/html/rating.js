@@ -31,7 +31,7 @@ function _pluckSize(size, str) {
     //     };
     // }
     if (unit === 'px') {
-        return +size.slice(l - 2);
+        return +size.slice(0,-2);
     } else if (+unit !== NaN) {
         return +size;
     }
@@ -326,6 +326,7 @@ class StarRating {
         this._internalConfig = {};
         this._onDraw = {};
         this._internalConfig.firstDraw = true;
+        this._internalConfig.firstValidate = true;
         this._elem.parentElement = parentElement;
 
         //setting defaults
@@ -362,127 +363,122 @@ class StarRating {
         this._elem.svg = new SVGContainer(parentElement, this._config.height, this._config.width);
         this._elem.stars = [];
 
-        if (attribs) {
-            if (this._validateAndSet(attribs)) {
-                this._calculateSide(this._config.padding, this._config.strokeWidth);
-                this._internalConfig.requestedAnimationFrame = true;
-                window.requestAnimationFrame(() => {
-                    this._draw();
-                });
-            } else {
-                this._elem.svg.removeNode();
-                console.error("Stopping execution");
-                return null;
-            }
-        } else {
-            this._calculateSide(this._config.padding, this._config.strokeWidth);
+        if (!attribs || (attribs && this._validateAndSet(attribs))) {
+            if(!attribs) this._calculateSide(1, 0);
             this._internalConfig.requestedAnimationFrame = true;
             window.requestAnimationFrame(() => {
                 this._draw();
             });
+        } else {
+            this._elem.svg.removeNode();
+            console.error("Stopping execution");
+            return null;
         }
     }
 
-    _calculateSide(padding, strokeWidth){
+    _calculateSide(padding, strokeWidth) {
         let side, sideOut;
         sideOut = this._internalConfig.direction === 'row' ? this._config.width / this._config.TotalStars : this._config.width;
-            side = this._internalConfig.direction === 'column' ? this._config.height / this._config.TotalStars : this._config.height;
-            sideOut = side < sideOut ? side : sideOut;
+        side = this._internalConfig.direction === 'column' ? this._config.height / this._config.TotalStars : this._config.height;
+        sideOut = side < sideOut ? side : sideOut;
 
-            if (strokeWidth !== undefined) {
-                if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
-                    console.error("Incorrect strokeWidth setting to default");
-                } else {
-                    this._config.strokeWidth = strokeWidth;
-                }
+        if (strokeWidth !== undefined) {
+            if (strokeWidth < 0 || strokeWidth > 0.10 * sideOut) {
+                this._config.strokeWidth = 0;
+                console.error("Incorrect strokeWidth setting to default");
+            } else {
+                this._config.strokeWidth = strokeWidth;
             }
+        }
 
-            if (padding !== undefined) {
-                if (padding < 1 || padding > 0.10 * sideOut) {
-                    console.error("Incorrect padding setting to default");
-                } else {
-                    this._config.padding = 1;
-                }
+        if (padding !== undefined) {
+            if (padding < 1 || padding > 0.10 * sideOut) {
+                this._config.padding = 1;
+                console.error("Incorrect padding setting to default");
+            } else {
+                this._config.padding = padding;
             }
+        }
 
-            side = sideOut - (this._config.padding * 2) - (this._config.strokeWidth * 2);
+        side = sideOut - (this._config.padding * 2) - (this._config.strokeWidth * 2);
 
-            if (side < 10) {
-                return false;
-            }
+        if (side < 10) {
+            return false;
+        }
 
-            if (side !== this._internalConfig.side || sideOut !== this._internalConfig.sideOut) {
-                this._internalConfig.side = side;
-                this._internalConfig.sideOut = sideOut;
-            }
+        if (side !== this._internalConfig.side || sideOut !== this._internalConfig.sideOut) {
+            this._internalConfig.side = side;
+            this._internalConfig.sideOut = sideOut;
+        }
+        return true;
     }
 
-    _calculateBaseShift(){
+    _calculateBaseShift() {
         let xShift = 0, yShift = 0, baseX = 0, baseY = 0,
-        justifyContent = this._config.justifyContent,
-        alignItems = this._config.alignItems,
-        side = this._internalConfig.side,
-        sideOut = this._internalConfig.sideOut,
-        height = this._config.height,
-        width = this._config.width,
-        TotalStars = this._config.TotalStars;
-            if (this._internalConfig.direction == 'row') {
-                xShift = sideOut;
-                if (justifyContent == 'start') {
-                    baseX = (sideOut / 2);
-                } else if (justifyContent == 'center') {
-                    baseX = (sideOut / 2) + ((width - (sideOut * TotalStars)) / 2);
-                } else if (justifyContent == 'end') {
-                    baseX = (width - (sideOut * TotalStars)) + (sideOut / 2);
-                } else if (justifyContent == 'space-evenly') {
-                    xShift = width / TotalStars;
-                    baseX = xShift / 2;
-                }
-                if (alignItems == 'center') {
-                    baseY = ((sideOut - side) / 2) + ((height - sideOut) / 2);
-                } else if (alignItems == 'start') {
-                    baseY = ((sideOut - side) / 2);
-                } else if (alignItems == 'end') {
-                    baseY = (height - sideOut);
-                }
-            } else if (this._internalConfig.direction == 'column') {
-                yShift = sideOut;
-                if (justifyContent == 'start') {
-                    baseY = (sideOut - side) / 2;
-                } else if (justifyContent == 'center') {
-                    baseY = ((sideOut - side) / 2);
-                } else if (justifyContent == 'end') {
-                    baseY = (height - (sideOut * TotalStars));
-                } else if (justifyContent == 'space-evenly') {
-                    yShift = height / TotalStars;
-                    baseY = (yShift - side) / 2;
-                }
-
-                //console.log(this.alignItems);
-                if (alignItems == 'center') {
-                    baseX = (sideOut / 2) + ((width - sideOut) / 2);
-                } else if (alignItems == 'start') {
-                    baseX = sideOut / 2;
-                } else if (alignItems == 'end') {
-                    baseX = width - (sideOut / 2);
-                }
+            justifyContent = this._config.justifyContent,
+            alignItems = this._config.alignItems,
+            side = this._internalConfig.side,
+            sideOut = this._internalConfig.sideOut,
+            height = this._config.height,
+            width = this._config.width,
+            TotalStars = this._config.TotalStars;
+        if (this._internalConfig.direction == 'row') {
+            xShift = sideOut;
+            if (justifyContent == 'start') {
+                baseX = (sideOut / 2);
+            } else if (justifyContent == 'center') {
+                baseX = (sideOut / 2) + ((width - (sideOut * TotalStars)) / 2);
+            } else if (justifyContent == 'end') {
+                baseX = (width - (sideOut * TotalStars)) + (sideOut / 2);
+            } else if (justifyContent == 'space-evenly') {
+                xShift = width / TotalStars;
+                baseX = xShift / 2;
             }
-            if (this._internalConfig.baseX !== baseX) {
-                this._internalConfig.baseX = baseX;
+            if (alignItems == 'center') {
+                baseY = ((sideOut - side) / 2) + ((height - sideOut) / 2);
+            } else if (alignItems == 'start') {
+                baseY = ((sideOut - side) / 2);
+            } else if (alignItems == 'end') {
+                baseY = (height - sideOut);
+            }
+        } else if (this._internalConfig.direction == 'column') {
+            yShift = sideOut;
+            if (justifyContent == 'start') {
+                baseY = (sideOut - side) / 2;
+            } else if (justifyContent == 'center') {
+                baseY = ((sideOut - side) / 2);
+            } else if (justifyContent == 'end') {
+                baseY = (height - (sideOut * TotalStars));
+            } else if (justifyContent == 'space-evenly') {
+                yShift = height / TotalStars;
+                baseY = (yShift - side) / 2;
             }
 
-            if (this._internalConfig.baseY !== baseY) {
-                this._internalConfig.baseY = baseY;
+            //console.log(this.alignItems);
+            if (alignItems == 'center') {
+                baseX = (sideOut / 2) + ((width - sideOut) / 2);
+            } else if (alignItems == 'start') {
+                baseX = sideOut / 2;
+            } else if (alignItems == 'end') {
+                baseX = width - (sideOut / 2);
             }
+        }
+        if (this._internalConfig.baseX !== baseX) {
+            this._internalConfig.baseX = baseX;
+        }
 
-            if (this._internalConfig.xShift !== xShift) {
-                this._internalConfig.xShift = xShift;
-            }
+        if (this._internalConfig.baseY !== baseY) {
+            this._internalConfig.baseY = baseY;
+        }
 
-            if (this._internalConfig.yShift !== yShift) {
-                this._internalConfig.yShift = yShift;
-            }
-            this._onDraw['_reassignPath'] = true;
+        if (this._internalConfig.xShift !== xShift) {
+            this._internalConfig.xShift = xShift;
+        }
+
+        if (this._internalConfig.yShift !== yShift) {
+            this._internalConfig.yShift = yShift;
+        }
+        this._onDraw['_reassignPath'] = true;
     }
 
     /**
@@ -505,39 +501,53 @@ class StarRating {
     _validateAndSet(attribs) {
         let cVal, calcSide, strokeWidth, padding;
         if (attribs.orientation !== undefined) {
-            if (['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'].includes(attribs.orientation) && cVal !== this._config.orientation) {
-                this._config.orientation = attribs.orientation;
-                attribs.direction = (attribs.orientation === 'top-to-bottom' || attribs.orientation === 'bottom-to-top') ? 'column' : 'row';
-                if (this._internalConfig.direction !== attribs.direction) {
-                    this._internalConfig.direction = attribs.direction;
-                    calcSide = true;
+            if (['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'].includes(attribs.orientation)) {
+                if (cVal !== this._config.orientation) {
+                    this._config.orientation = attribs.orientation;
+                    attribs.direction = (attribs.orientation === 'top-to-bottom' || attribs.orientation === 'bottom-to-top') ? 'column' : 'row';
+                    if (this._internalConfig.direction !== attribs.direction) {
+                        this._internalConfig.direction = attribs.direction;
+                        calcSide = true;
+                    }
+                    this._internalConfig.flow = (attribs.orientation === 'left-to-right' || attribs.orientation === 'top-to-bottom') ? '' : 'reverse';
                 }
-                this._internalConfig.flow = (attribs.orientation === 'left-to-right' || attribs.orientation === 'top-to-bottom') ? '' : 'reverse';
+            } else {
+                console.error("Incorrect orientation: " + attribs.orientation);
             }
         }
 
         if (attribs.height !== undefined) {
             cVal = _pluckSize(attribs.height);
-            if (cVal && cVal >= 20 && cVal !== this._config.height) {
-                this._config.height = cVal;
-                calcSide = true;
+            if (cVal >= 20) {
+                if (cVal !== this._config.height) {
+                    this._config.height = cVal;
+                    calcSide = true;
+                }
+            } else {
+                console.error("Incorrect height: " + attribs.height);
             }
         }
 
         if (attribs.width !== undefined) {
             cVal = _pluckSize(attribs.width);
-            if (cVal && cVal >= 20 && cVal !== this._config.width) {
-                this._config.width = cVal;
-                calcSide = true;
+            if (cVal >= 20) {
+                if (cVal !== this._config.width) {
+                    this._config.width = cVal;
+                    calcSide = true;
+                }
+            } else {
+                console.error("Incorrect width: " + attribs.width);
             }
         }
 
         if (attribs.stars !== undefined) {
             cVal = +attribs.stars;
-            if (cVal > 0 && cVal !== this._config.TotalStars) {
-                this._config.TotalStars = cVal;
-                calcSide = true;
-            } else if (!cVal) {
+            if (cVal > 0) {
+                if (cVal !== this._config.TotalStars) {
+                    this._config.TotalStars = cVal;
+                    calcSide = true;
+                }
+            } else {
                 console.error("Incorrect value for stars: " + attribs.stars);
             }
         }
@@ -546,6 +556,9 @@ class StarRating {
             cVal = _pluckSize(attribs.padding);
             if (cVal && cVal !== this._config.padding) {
                 padding = cVal;
+                calcSide = true;
+            } else if (!cVal) {
+                console.error('Incorrect padding: ' + attribs.padding);
             }
         }
 
@@ -553,35 +566,53 @@ class StarRating {
             cVal = _pluckSize(attribs.strokeWidth);
             if (cVal && cVal !== this._config.strokeWidth) {
                 strokeWidth = cVal;
+                calcSide = true;
+            } else if (!cVal) {
+                console.error('Incorrect strokeWidth: ' + attribs.strokeWidth);
             }
         }
 
         if (attribs.rating !== undefined) {
             cVal = +attribs.rating; //using toFixed reduces performance so do it later
-            if (cVal >= 0 && cVal <= this._config.TotalStars && cVal !== this._config.rating) {
-                this._config.rating = cVal;
-            } else if (!cVal) {
-                console.log('Incorrect rating value: ' + attribs.rating);
+            if (cVal >= 0 && cVal <= this._config.TotalStars) {
+                if (cVal !== this._config.rating) {
+                    this._config.rating = cVal;
+                }
+            } else {
+                if(cVal > this._config.TotalStars){
+                    this._config.rating = undefined;
+                }
+                console.error('Incorrect rating: ' + attribs.rating);
             }
         }
 
         if (attribs.justifyContent !== undefined) {
-            if (['start', 'end', 'center', 'space-evenly'].includes(attribs.justifyContent) && attribs.justifyContent !== this._config.justifyContent) {
-                this._config.justifyContent = attribs.justifyContent;
+            if (['start', 'end', 'center', 'space-evenly'].includes(attribs.justifyContent)) {
+                if (attribs.justifyContent !== this._config.justifyContent) {
+                    this._config.justifyContent = attribs.justifyContent;
+                }
+            } else {
+                console.error('Incorrect justifyContent: ' + attribs.justifyContent);
             }
         }
 
         if (attribs.alignItems !== undefined) {
-            if (['start', 'end', 'center'].includes(attribs.alignItems) && attribs.alignItems !== this._config.alignItems) {
-                this._config.alignItems = attribs.alignItems;
+            if (['start', 'end', 'center'].includes(attribs.alignItems)) {
+                if (attribs.alignItems !== this._config.alignItems) {
+                    this._config.alignItems = attribs.alignItems;
+                }
+            } else {
+                console.error('Incorrect alignItems: ' + attribs.alignItems);
             }
         }
 
         if (attribs.ratedFill !== undefined) {
             cVal = _validateColorCode(attribs.ratedFill);
-            if (cVal && cVal !== this._config.ratedFill) {
-                this._config.ratedFill = cVal;
-            } else if (!cVal) {
+            if (cVal) {
+                if (cVal !== this._config.ratedFill) {
+                    this._config.ratedFill = cVal;
+                }
+            } else {
                 console.error('Incorrect color for ratedFill: ' + attribs.ratedFill);
             }
         }
@@ -589,9 +620,11 @@ class StarRating {
 
         if (attribs.nonratedFill !== undefined) {
             cVal = _validateColorCode(attribs.nonratedFill);
-            if (cVal && cVal !== this._config.nonratedFill) {
-                this._config.nonratedFill = cVal;
-            } else if (!cVal) {
+            if (cVal) {
+                if (cVal !== this._config.nonratedFill) {
+                    this._config.nonratedFill = cVal;
+                }
+            } else {
                 console.error('Incorrect color for ratedFill: ' + attribs.nonratedFill);
             }
         }
@@ -599,24 +632,29 @@ class StarRating {
 
         if (attribs.ratedStroke !== undefined) {
             cVal = _validateColorCode(attribs.ratedStroke);
-            if (cVal && cVal !== this._config.ratedStroke) {
-                this._config.ratedStroke = cVal;
-            } else if (!cVal) {
+            if (cVal) {
+                if (cVal !== this._config.ratedStroke) {
+                    this._config.ratedStroke = cVal;
+                }
+            } else {
                 console.error('Incorrect color for ratedFill: ' + attribs.ratedStroke);
             }
         }
 
         if (attribs.nonratedStroke !== undefined) {
             cVal = _validateColorCode(attribs.nonratedStroke);
-            if (cVal && cVal !== this._config.nonratedStroke) {
-                this._config.nonratedStroke = cVal;
-            } else if (!cVal) {
+            if (cVal) {
+                if (cVal !== this._config.nonratedStroke) {
+                    this._config.nonratedStroke = cVal;
+                }
+            } else {
                 console.error('Incorrect color for ratedFill: ' + attribs.nonratedStroke);
             }
         }
 
-        if (calcSide) {
-            this._calculateSide(padding, strokeWidth);
+        if (calcSide || this._internalConfig.firstValidate) {
+            this._internalConfig.firstValidate = false;
+            return this._calculateSide(padding || this._config.padding, strokeWidth || this._config.strokeWidth);
         }
 
 
